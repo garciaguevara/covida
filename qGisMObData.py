@@ -14,6 +14,9 @@ iface.actionCopyLayerStyle().trigger()
 qgis.utils.iface.setActiveLayer(vlayerNew)
 iface.actionPasteLayerStyle().trigger()
 
+
+
+
 qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/visu/020800.pn
 
 ###########################################################################################################

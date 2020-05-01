@@ -2,10 +2,13 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.spatial import cKDTree
+from scipy.spatial import Voronoi, voronoi_plot_2d
+import pickle
 mobiVisuRes="/data/covid/visuRes"
-allMobi="/data/covid/fb26PerDay"#/2020-04-02_0000.csv"
+allMobi="/data/covid/fb26PerDay/"#/2020-04-02_0000.csv"
 # mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
-mobiTempPerDay="/data/covid/fb26PerDay/2020-04-AAAA.csv"
+mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
 covCasos="/data/covid/casos/Casos_Diarios_Estado_Nacional_Confirmados.csv"
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
@@ -13,13 +16,10 @@ centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/I
 # title="Municipalities with displacement larger 30 km per day"
 baselinePerFile=[]; getCountry='MX'#'GT'#
 
-# def computeFlow(dataMob):
-#     dataMob.insert(20,'flow',0)
-#     for idx, traj in dataMob.iterrows():
-#         dataMob.at[idx,'flow']=traj['n_baseline']+traj['n_difference'] #dataMob.head(1)['flow']
-
 import unicodedata
-
+from matplotlib.colors import LinearSegmentedColormap
+import colorsys
+import numpy as np
 
 def numberOfNonMatchLetters(a,b):
     u=zip(a,b)
@@ -31,6 +31,74 @@ def numberOfNonMatchLetters(a,b):
     return x
 
 
+def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=False, verbose=True):
+    """
+    Creates a random colormap to be used together with matplotlib. Useful for segmentation tasks
+    :param nlabels: Number of labels (size of colormap)
+    :param type: 'bright' for strong colors, 'soft' for pastel colors
+    :param first_color_black: Option to use first color as black, True or False
+    :param last_color_black: Option to use last color as black, True or False
+    :param verbose: Prints the number of labels and shows the colormap. True or False
+    :return: colormap for matplotlib
+    """
+
+    if type not in ('bright', 'soft'):
+        print ('Please choose "bright" or "soft" for type')
+        return
+
+    if verbose:
+        print('Number of labels: ' + str(nlabels))
+
+    # Generate color map for bright colors, based on hsv
+    if type == 'bright':
+        randHSVcolors = [(np.random.uniform(low=0.0, high=1),
+                          np.random.uniform(low=0.2, high=1),
+                          np.random.uniform(low=0.9, high=1)) for i in xrange(nlabels)]
+
+        # Convert HSV list to RGB
+        randRGBcolors = []
+        for HSVcolor in randHSVcolors:
+            randRGBcolors.append(colorsys.hsv_to_rgb(HSVcolor[0], HSVcolor[1], HSVcolor[2]))
+
+        if first_color_black:
+            randRGBcolors[0] = [0, 0, 0]
+
+        if last_color_black:
+            randRGBcolors[-1] = [0, 0, 0]
+
+        random_colormap = LinearSegmentedColormap.from_list('new_map', randRGBcolors, N=nlabels)
+
+    # Generate soft pastel colors, by limiting the RGB spectrum
+    if type == 'soft':
+        low = 0.6
+        high = 0.95
+        randRGBcolors = [(np.random.uniform(low=low, high=high),
+                          np.random.uniform(low=low, high=high),
+                          np.random.uniform(low=low, high=high)) for i in xrange(nlabels)]
+
+        if first_color_black:
+            randRGBcolors[0] = [0, 0, 0]
+
+        if last_color_black:
+            randRGBcolors[-1] = [0, 0, 0]
+        random_colormap = LinearSegmentedColormap.from_list('new_map', randRGBcolors, N=nlabels)
+
+    # Display colorbar
+    if verbose:
+        from matplotlib import colors, colorbar
+        from matplotlib import pyplot as plt
+        fig, ax = plt.subplots(1, 1, figsize=(15, 0.5))
+
+        bounds = np.linspace(0, nlabels, nlabels + 1)
+        norm = colors.BoundaryNorm(bounds, nlabels)
+
+        cb = colorbar.ColorbarBase(ax, cmap=random_colormap, norm=norm, spacing='proportional', ticks=None,
+                                   boundaries=bounds, format='%1i', orientation=u'horizontal')
+
+    return random_colormap
+
+
+
 def addCentroidToMunicipalCases(casosDF):            
     with open(centroidPath, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         centroidDF = pd.read_csv( centroidPath )
@@ -40,11 +108,9 @@ def addCentroidToMunicipalCases(casosDF):
     casosDF.insert(0,'X',0.0); casosDF.insert(1,'Y',0.0)
     print(casosDF.shape)
     for idx, casosMun in casosDF.iterrows():
-        centroidMun=centroidDF[casosMun["cve_ent"]==centroidDF['CVE_MUN']]
-        
+        centroidMun=centroidDF[casosMun["cve_ent"]==centroidDF['CVE_MUN']]        
         encoded1 = unicodedata.normalize('NFC', casosMun["nombre"].decode('utf8'))
         encoded2 = unicodedata.normalize('NFC', centroidMun["NOM_MUN"].values[0].decode('utf8'))
-
         
         if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and numberOfNonMatchLetters(encoded1,encoded2)<3:
             casosDF.at[idx,'X']=centroidMun['X'].values[0]
@@ -59,35 +125,129 @@ def addCentroidToMunicipalCases(casosDF):
 #     return dfMerged
 
 
-with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-     casosDF = pd.read_csv( covCasos )
-adminRegPerDay=[]; totalReg=set([])
-for day in range(2,26): #
-    with open(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-        mobiDF = pd.read_csv( mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)) )
-        #     with open(mobiTemp.replace('AAAA',"{:02d} 0800".format(day)), 'r') as f:
-        #         df08 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0800".format(day)) )
-        #     with open(mobiTemp.replace('AAAA',"{:02d} 1600".format(day)), 'r') as f:
-        #         df16 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 1600".format(day)) )
-        # admRegNameStart=mobiDF.start_polygon_name.unique(); admRegNameEnd=mobiDF.end_polygon_name.unique();admRegNameStart.size; admRegNameEnd.size
-    admRegIdStart=mobiDF.start_polygon_id.unique(); admRegIdEnd=mobiDF.end_polygon_id.unique();
-    admRegSetStart=set(admRegIdStart);admRegSetEnd=set(admRegIdEnd)
+def mergeMobilityCoord(dayRange):
+    adminRegPerDay=[]; totalReg=[];totalGeoLoc=[]; totalGeoLocName=[];
+    totalRegSet=set([]); totalLargerChangeLoc=[]       
+    for day in range(dayRange[0],dayRange[1]): #
+        with open(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+            mobiDF = pd.read_csv( mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)) )
+            #     with open(mobiTemp.replace('AAAA',"{:02d} 0800".format(day)), 'r') as f:
+            #         df08 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0800".format(day)) )
+            #     with open(mobiTemp.replace('AAAA',"{:02d} 1600".format(day)), 'r') as f:
+            #         df16 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 1600".format(day)) )
+            # admRegNameStart=mobiDF.start_polygon_name.unique(); admRegNameEnd=mobiDF.end_polygon_name.unique();admRegNameStart.size; admRegNameEnd.size
+        admRegIdStart=mobiDF.start_polygon_id.unique(); admRegIdEnd=mobiDF.end_polygon_id.unique();
+        admRegSetStart=set(admRegIdStart);admRegSetEnd=set(admRegIdEnd)        
+        #split geometry
+        test = mobiDF["geometry"].str.replace("LINESTRING \(", "", n=1)
+        test=test.str.replace("\)", "", n=1)
+        test = test.str.split(",", n=1, expand=True)            
+        #TODO: geometry with start end lat lons
+        testStart = test[0].str.split(" ", n=1, expand=True);    testEnd = test[1].str.split(" ", n=2, expand=True)#testEnd=test.str.replace(",", "", n=1)
+        mobiDF["geoStartLat"]= testStart[1].astype('float64');    mobiDF["geoStartLon"]= testStart[0].astype('float64')#convert_objects(convert_numeric=True) #
+        mobiDF["geoEndLat"]= testEnd[2].astype('float64');    mobiDF["geoEndLon"]= testEnd[1].astype('float64')
+        geoLoc=[]; geoLocName=[]; largerChangeLoc=[]
+        
+        for idStart in admRegIdStart: #TODO: Only look for non added, or compare the diff coordinates
+            idName=mobiDF[mobiDF['start_polygon_id']==idStart].head(1)['start_polygon_name'].values[0]
+            idLat=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['start_lat'], mobiDF[mobiDF['end_polygon_id']==idStart]['end_lat'] ], ignore_index=True, sort=False )
+            idLon=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['start_lon'], mobiDF[mobiDF['end_polygon_id']==idStart]['end_lon'] ], ignore_index=True, sort=False )
+            if np.abs(idLat.max()- idLat.min())<0.000001 and np.abs(idLon.mean()-idLon.max())<0.000001:
+                geoLat=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['geoStartLat'], mobiDF[mobiDF['end_polygon_id']==idStart]['geoEndLat'] ], ignore_index=True, sort=False)
+                geoLon=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['geoStartLon'], mobiDF[mobiDF['end_polygon_id']==idStart]['geoEndLon'] ], ignore_index=True, sort=False)
+    #         mobiDF[mobiDF['start_polygon_id']==idStart]['start_lat']
+    #         startLon=mobiDF[mobiDF['start_polygon_id']==idStart]['start_lon']
+    #         endLat=mobiDF[mobiDF['end_polygon_id']==idStart]['end_lat']
+    #         endLon=mobiDF[mobiDF['end_polygon_id']==idStart]['end_lon']
+                if np.abs(geoLat.min()-geoLat.max())>0.3 or np.abs(geoLon.min()-geoLon.max())>0.3 or geoLat.std()>0.1 or geoLon.std()>0.1: #TODO: print and check max diff in hubs map 
+                    print("{} GEOMETRY lat [{}, {}] u={} lon  [{}, {}] u={}".format( idName, geoLat.min(), geoLat.max(), geoLat.mean(), geoLon.min(), geoLon.max(), geoLon.mean() ) )
+                    print("{} GEOMETRY lat diff={}, s={} lon diff={}, s{}".format( idName, geoLat.min()-geoLat.max(), geoLat.std(), geoLon.min()-geoLon.max(), geoLon.std() ) )
+                    largerChangeLoc.append([idStart, idName,geoLat.min(), geoLat.max(), geoLat.mean()])
+                    
+                geoLoc.append([geoLat.mean(), geoLon.mean()]); geoLocName.append( idName ) #TODO: geometry back to mean geoLoc
+    #                 mobiDF.at(mobiDF['start_polygon_id']==idStart, "geoStartLat") = geoLat.mean(); mobiDF.at(mobiDF['end_polygon_id']==idStart, "geoEndLat") = geoLat.mean()
+    #                 mobiDF.at(mobiDF['start_polygon_id']==idStart, "geoStartLon") = geoLon.mean(); mobiDF.at(mobiDF['end_polygon_id']==idStart, "geoEndLon") = geoLon.mean()
+                
+                mobiDF[mobiDF['start_polygon_id']==idStart] = mobiDF[mobiDF['start_polygon_id']==idStart].assign( geoStartLat=geoLat.mean() ); 
+                mobiDF[mobiDF['end_polygon_id']==idStart]=mobiDF[mobiDF['end_polygon_id']==idStart].assign( geoEndLat=geoLat.mean() );  
+                mobiDF[mobiDF['start_polygon_id']==idStart]=mobiDF[mobiDF['start_polygon_id']==idStart].assign( geoStartLon=geoLon.mean() ); 
+                mobiDF[mobiDF['end_polygon_id']==idStart]=mobiDF[mobiDF['end_polygon_id']==idStart].assign( geoEndLon=geoLon.mean() );  
+    #                 geoLat=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['geoStartLat'], mobiDF[mobiDF['end_polygon_id']==idStart]['geoEndLat'] ], ignore_index=True, sort=False)
+    #                 geoLon=pd.concat( [ mobiDF[mobiDF['start_polygon_id']==idStart]['geoStartLon'], mobiDF[mobiDF['end_polygon_id']==idStart]['geoEndLon'] ], ignore_index=True, sort=False)
+    #                 print("{} Difference GEOMETRY lat [{}, {}] u={} lon  [{}, {}] u={}".format( idName, geoLat.min(), geoLat.max(), geoLat.mean(), geoLon.min(), geoLon.max(), geoLon.mean() ) )
+            else:
+                print("{} Difference  ADMIN REGION!!! lat [{}, {}] u={}  [{}, {}] u={}".format( idName, idLat.min(), idLat.max(), idLat.mean(), idLon.min(), idLon.max(), idLon.mean() ) )        #TODO: check which change it should not!!       
+        
+        if admRegIdStart.size == admRegIdEnd.size and len( admRegSetEnd.difference(admRegSetStart) ) == 0:
+            adminRegPerDay.append(admRegIdStart.size);totalLargerChangeLoc.append(largerChangeLoc)
+            if len( totalRegSet.difference(admRegSetStart) ) != 0 or len(admRegSetStart.difference(totalReg)) :  #TODO: verify diff of sets should be totalReg.                       
+                for idx, idStart in enumerate(list(admRegIdStart)):
+                    if idStart not in totalReg:
+                        totalReg.append(idStart)
+                        totalGeoLoc.append(geoLoc[idx]);
+                        totalGeoLocName.append(geoLocName[idx]);
+                        if day>dayRange[0]:
+                            print("{} NEW ADMIN REGION {} [{}]".format( geoLocName[idx], idStart, geoLoc[idx] ) )            
+    #             totalReg=list(OrderedDict.fromkeys(totalReg+list(admRegIdStart)))
+    #             totalReg.append(admRegIdStart)#union sets keep order
+    #             totalReg=totalReg+list(admRegIdStart); totalRegB=list(totalRegSet.union(admRegSetStart) )
+    #             totalRegSet=totalRegSet.union(admRegSetStart); totalRegSet=totalRegSet.union(admRegSetEnd); #print("totalReg size end {}".format(len(totalReg)))#print("totalReg size start {}".format(len(totalReg)))            
+        else: 
+            print("Different Id startEnd size {}!!!!".format( len( admRegSetEnd.difference(admRegSetStart) ) ) )
+    
+        print("Merge mobility day {}".format(day) )
+        with open(allMobi+"mobilityCoordMerged.pkl", 'wb') as matchTreeFile:
+            pickle.dump([totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay], matchTreeFile)
+            
+    return totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay
 
-    if admRegIdStart.size == admRegIdEnd.size and len( admRegSetEnd.difference(admRegSetStart) ) == 0:
-        if len( totalReg.difference(admRegSetStart) ) != 0 or len(admRegSetStart.difference(totalReg)) :  
-            totalReg=totalReg.union(admRegSetStart); #print("totalReg size start {}".format(len(totalReg)))
-            totalReg=totalReg.union(admRegSetEnd); #print("totalReg size end {}".format(len(totalReg)))
-    else: 
-        print("Different Id startEnd size {} ".format( len( admRegSetEnd.difference(admRegSetStart) ) ) )
-
-print("TotalReg mobility municipios size end {}".format(len(totalReg)))
-
-muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
-print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
-
-addCentroidToMunicipalCases(casosDF)
 
 
+dayRange=[2,26]
+
+if os.path.exists(allMobi+"mobilityCoordMerged.pkl"):
+    with open(allMobi+"mobilityCoordMerged.pkl", 'rb') as matchTreeFile:
+        tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)
+else:
+    tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay=mergeMobilityCoord(dayRange)
+
+tRegSet=set(tReg);len(tRegSet);#tGeoLocSet=set(tGeoLoc); len(tGeoLocSet)
+
+
+##################################################################################################################################################################################
+# with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+#      casosDF = pd.read_csv( covCasos )
+# muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
+# print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
+# addCentroidToMunicipalCases(casosDF)
+
+with open(covCasos.replace('.',"Centroids."), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+     casosCentroidsDF = pd.read_csv( covCasos.replace('.',"Centroids.") )
+
+##################################################################################################################################################################################
+
+
+
+muniCasesPts=np.array([list(casosCentroidsDF['X'].values),list(casosCentroidsDF['Y'].values)]); muniCasesPts=muniCasesPts.transpose()
+new_cmap = rand_cmap(50000, type='bright', first_color_black=True, last_color_black=False, verbose=True)
+tGeoLocInv=np.array(tGeoLoc)
+tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]
+vorInv = Voronoi(tGeoLocInv)
+voronoi_plot_2d(vorInv,show_vertices=False,point_size=0.9)
+plt.plot(muniCasesPts[:,0], muniCasesPts[:,1], 'rx',ms=0.9)
+
+
+plt.show()
+
+[-102.295803,  21.811436]
+MobilityNodesVoronoiKdtree = cKDTree(tGeoLocInv)
+# sanAndresChol = [-98.2897525067248 ,19.0241411772732]; test_point_dist, sanPedroChol = MobilityNodesVoronoiKdtree.query(sanAndresChol); 
+# tGeoLocName[sanPedroChol]
+
+test_point_dist, test_point_regions = MobilityNodesVoronoiKdtree.query(muniCasesPts)
+
+
+plt.scatter(muniCasesPts[:,0], muniCasesPts[:,1], c=test_point_regions,cmap=new_cmap, s=3.5)#'Set3'
 
 # casosDFmx= casosDF[getCountry== casosDF['country']];df08mx=df08[getCountry==df08['country']];df16mx=df16[getCountry==df16['country']]
 # # computeFlow( casosDFmx);computeFlow(df08mx); computeFlow(df16mx);
