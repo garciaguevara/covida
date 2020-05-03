@@ -6,10 +6,10 @@ from scipy.spatial import cKDTree
 from scipy.spatial import Voronoi, voronoi_plot_2d
 import pickle
 mobiVisuRes="/data/covid/visuRes"
-allMobi="/data/covid/fb26PerDay/"#/2020-04-02_0000.csv"
+allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
 # mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
 mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
-covCasos="/data/covid/casos/Casos_Diarios_Estado_Nacional_Confirmados.csv"
+covCasos="/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_Confirmados.csv" #/data/covid/casos/27_04
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 #Join databases per day
@@ -29,7 +29,6 @@ def numberOfNonMatchLetters(a,b):
         if i==j:
             x=+1
     return x
-
 
 def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=False, verbose=True):
     """
@@ -96,8 +95,6 @@ def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=F
                                    boundaries=bounds, format='%1i', orientation=u'horizontal')
 
     return random_colormap
-
-
 
 def addCentroidToMunicipalCases(casosDF):            
     with open(centroidPath, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
@@ -197,11 +194,8 @@ def mergeMobilityCoord(dayRange):
     
         print("Merge mobility day {}".format(day) )
         with open(allMobi+"mobilityCoordMerged.pkl", 'wb') as matchTreeFile:
-            pickle.dump([totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay], matchTreeFile)
-            
+            pickle.dump([totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay], matchTreeFile)            
     return totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay
-
-
 
 dayRange=[2,26]
 
@@ -213,57 +207,91 @@ else:
 
 tRegSet=set(tReg);len(tRegSet);#tGeoLocSet=set(tGeoLoc); len(tGeoLocSet)
 
-
 ##################################################################################################################################################################################
-# with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-#      casosDF = pd.read_csv( covCasos )
-# muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
-# print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
-# addCentroidToMunicipalCases(casosDF)
-
+if  not os.path.exists( covCasos.replace('.',"Centroids.") ):
+    with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+        casosDF = pd.read_csv( covCasos )
+    muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
+    print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
+    addCentroidToMunicipalCases(casosDF)
+    
 with open(covCasos.replace('.',"Centroids."), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
      casosCentroidsDF = pd.read_csv( covCasos.replace('.',"Centroids.") )
 
 ##################################################################################################################################################################################
 
-
-
 muniCasesPts=np.array([list(casosCentroidsDF['X'].values),list(casosCentroidsDF['Y'].values)]); muniCasesPts=muniCasesPts.transpose()
-new_cmap = rand_cmap(50000, type='bright', first_color_black=True, last_color_black=False, verbose=True)
-tGeoLocInv=np.array(tGeoLoc)
+new_cmap = rand_cmap(50000, type='bright', first_color_black=True, last_color_black=False, verbose=False)
+tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
 tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]
 vorInv = Voronoi(tGeoLocInv)
 voronoi_plot_2d(vorInv,show_vertices=False,point_size=0.9)
-plt.plot(muniCasesPts[:,0], muniCasesPts[:,1], 'rx',ms=0.9)
+plt.plot(muniCasesPts[:,0], muniCasesPts[:,1], 'rx',ms=0.9); plt.show()
+
+plt.plot(muniCasesPts[144,0], muniCasesPts[144,1], 'k^',ms=2.9); print("Muni {}".format(casosCentroidsDF['nombre'].values[144]) )#PalenqueMuni
+plt.plot(muniCasesPts[129,0], muniCasesPts[129,1], 'c^',ms=2.9); print("Muni {}".format(casosCentroidsDF['nombre'].values[129]) )#PalenqueMun
+
+plt.plot(tGeoLocInv[20,0], tGeoLocInv[20,1], 'ks',ms=2.9); print("AdminReg {}".format(tGeoLocName[20]) )
+plt.plot(tGeoLocInv[25,0], tGeoLocInv[25,1], 'cs',ms=2.9); print("AdminReg {}".format(tGeoLocName[25]) )
 
 
-plt.show()
-
-[-102.295803,  21.811436]
 MobilityNodesVoronoiKdtree = cKDTree(tGeoLocInv)
 # sanAndresChol = [-98.2897525067248 ,19.0241411772732]; test_point_dist, sanPedroChol = MobilityNodesVoronoiKdtree.query(sanAndresChol); 
 # tGeoLocName[sanPedroChol]
+palenqueDist, palenqueAdminRegIdx = MobilityNodesVoronoiKdtree.query(muniCasesPts[144]);tGeoLocName[palenqueAdminRegIdx]
 
 test_point_dist, test_point_regions = MobilityNodesVoronoiKdtree.query(muniCasesPts)
+plt.scatter(muniCasesPts[:,0], muniCasesPts[:,1], c=test_point_regions,cmap=new_cmap, s=5.5)#'Set3'
+
+casosCentroidsDF.insert(2,'PolygonID',-1);casosCentroidsDF.insert(3,'PolygonName','AAAA');casosCentroidsDF.insert(4,'PolygonPosition','-1.0, -1.0')
+
+muniPolyIDs=[]; muniPolyAdminNames=[]; muniPolyPositions=[];
+for testPtRegion in test_point_regions:
+    muniPolyIDs.append(tReg[testPtRegion]);muniPolyAdminNames.append(tGeoLocName[testPtRegion]);muniPolyPositions.append(str(tGeoLocInv[testPtRegion]))
+
+casosCentroidsDF['PolygonID']=muniPolyIDs; casosCentroidsDF['PolygonName']=muniPolyAdminNames;  casosCentroidsDF['PolygonPosition']=muniPolyPositions
+casosCentroidsDF.to_csv(covCasos.replace('.',"CentroidsWithAdminRegFB."),index=False)
+keepIds=['PolygonID','PolygonName','PolygonPosition','cve_ent','nombre']
+sumIds= list(casosCentroidsDF)
+for kId in keepIds+['X','Y']:  sumIds.remove(kId)
+
+df = pd.DataFrame(columns = keepIds+sumIds)
+
+casosCentroidsDF['cve_ent']=casosCentroidsDF['cve_ent'].transform(lambda x: str(x))
+municipiosInsideReg=[]; emptyAdminRegions=[]
+for adminRegID, adminRegName, idx, adminGeoLoc in zip(tReg, tGeoLocName, xrange(len(tGeoLocName)), tGeoLocInv):
+    casosSameAdminRegionDF = casosCentroidsDF[casosCentroidsDF['PolygonID']==adminRegID]
+    municipiosInsideReg.append([adminRegName, len(casosSameAdminRegionDF)-1 ])
+    sumAdminReg=pd.concat( [ casosSameAdminRegionDF[['cve_ent','nombre']].agg(lambda x: ', '.join(x)).T, casosSameAdminRegionDF[sumIds].sum().T ] ) 
+        
+#     casosSameAdminRegionDF[['PolygonID','PolygonName','PolygonPosition']].head(1)    
+#     sumAdminReg=pd.concat( [casosSameAdminRegionDF[['PolygonID','PolygonName','PolygonPosition']].head(1), casosSameAdminRegionDF[['cve_ent','nombre']].agg(lambda x: ', '.join(x)).T, casosSameAdminRegionDF[sumIds].sum().T ] ) 
+#     casosSameAdminRegionDF[['nombre']].agg(lambda x: ', '.join(x));    casosSameAdminRegionDF[['cve_ent']].agg(lambda x: ', '.join(x))    
+#     casosSameAdminRegionDF[['cve_ent','nombre']].agg(lambda x: ', '.join(x));    df.append(, ignore_index=True)
+#     df=df.append(data2k, ignore_index=True, sort=False)
+    if len(casosSameAdminRegionDF[keepIds[0]].head(1).values)>0:
+        df=df.append(sumAdminReg, ignore_index=True, sort=False)
+        for keID in keepIds[0:3]: df.at[idx-len(emptyAdminRegions),keID]=casosSameAdminRegionDF[keID].head(1).values[0]
+    else:
+        emptyAdminRegions.append(adminRegName); #print("Missing elements {} {}".format(adminRegID, adminRegName)); 
+        plt.plot(adminGeoLoc[0], adminGeoLoc[1], 'g*',ms=14); 
+    
+df.to_csv(covCasos.replace('.',"CentroidsPerAdminRegions."),index=False)
+print("Missing elements {} {}".format(emptyAdminRegions, len(emptyAdminRegions) ) )
 
 
-plt.scatter(muniCasesPts[:,0], muniCasesPts[:,1], c=test_point_regions,cmap=new_cmap, s=3.5)#'Set3'
 
 # casosDFmx= casosDF[getCountry== casosDF['country']];df08mx=df08[getCountry==df08['country']];df16mx=df16[getCountry==df16['country']]
-# # computeFlow( casosDFmx);computeFlow(df08mx); computeFlow(df16mx);
-# 
+# # computeFlow( casosDFmx);computeFlow(df08mx); computeFlow(df16mx);# 
 # #  casosDFmx['start_polygon_name']['end_polygon_name']  casosDFmx.head(1)['n_baseline']
 # casosDFmxMerged=mergeMobilities( casosDFmx, df08mx);print( casosDFmxMerged.shape)
-# casosDFmxMerged=mergeMobilities( casosDFmxMerged, df16mx);print( casosDFmxMerged.shape)
-# 
+# casosDFmxMerged=mergeMobilities( casosDFmxMerged, df16mx);print( casosDFmxMerged.shape)# 
 # casosDFmxMerged.to_csv(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)),index=False)
 # print(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)))
-
 #  casosDFmx= casosDFmx[1:10];df08mx=df08mx[1:10];df16mx=df16mx[1:10]
 # areSame =  casosDFmx['start_polygon_name']==df08mx['start_polygon_name']
 # for muni in areSame:
-#     if not muni: print("ERROR {}".format(muni) ); break;
-#
+#     if not muni: print("ERROR {}".format(muni) ); break;#
 #
 # dfSum= casosDFmx['n_baseline']+df08mx['n_baseline']
 #
