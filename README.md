@@ -3,5 +3,5 @@ Mobility data visualization and preparation for spatio-temporal epidmiological m
 
 - Visualization of facebook mobility matrices, with a level 3 granularity municipalities, in QGIs.
 
-- Matching mobility matrices and covid-19 reported cases resolution. 
+- Match covid-19 reported cases into the mobility matrices resolution. 
 ![demo](images/municipalitiesInsideVoronoi.png)
