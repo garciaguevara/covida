@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/fb26PerDay"#/2020-04-02_0000.csv"
 mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"

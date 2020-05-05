@@ -20,6 +20,7 @@ centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/I
 #Join databases per day
 # title="Municipalities with displacement larger 30 km per day"
 baselinePerFile=[]; getCountry='MX'#'GT'#
+
 joinByMobGeo="ByStartPt"#""
 
 def numberOfNonMatchLetters(a,b):
