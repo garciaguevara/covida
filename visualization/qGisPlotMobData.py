@@ -25,10 +25,10 @@ def plotStartPoints(pathToMob, filter=None,nLetters=8):
         vlayerPts.setSubsetString(filter) #"start_polygon_name = end_polygon_name"        
     return vlayerPts
 
-def plotTrajectory(pathToMob, filter=None,nLetters=8):
-    uri = "file:/{}?delimiter=,&crs=epsg:4326&wktField=geometry&wktType=Line".format(pathToMob)
+def plotTrajectory(pathToMob, wkt="geometry",filter=None,nLetters=8):
+    uri = "file:/{}?delimiter=,&crs=epsg:4326&wktField={}&wktType=Line".format(pathToMob,wkt)
     _,t=os.path.split(pathToMob); t=t.replace(".csv","")
-    vlayerBase = QgsVectorLayer(uri,t[-nLetters:]+'Traj','delimitedtext'); 
+    vlayerBase = QgsVectorLayer(uri,t[5:11]+'Traj','delimitedtext'); 
     if not vlayerBase.isValid(): print("Traj layer {} failed to load!".format(t[-nLetters:]))    
     QgsProject.instance().addMapLayer(vlayerBase) #QGIS3
     if not filter is None:

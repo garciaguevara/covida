@@ -15,19 +15,20 @@ qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/casos/01_05/{}.png'.format
 ##########################################################################################################################3
 # BaselineMax=['2020-04-08_0000', 5455.8000000000002, 10.0, 2091]# in series 3 per day
 # flow min=['2020-04-12_MX', 2152, 61, 182.85438596491227, 570]
-metricMax=['2020-04-02_MX', 4635, 61, 215.47416020671835, 774] #in series
+#Trajectory base file length>30km n_crisis >60
+metricMax=['2020-04-02_MX', 4635, 61, 215.47416020671835, 774] #ByStartPt  #in series
 mobiVisuRes="/data/covid/visuRes"
-allMobi="/data/covid/fb26PerDay"#"/data/covid/CoronavirusMovementAdministrativeRegionsPerDay"#/2020-04-02_0000.csv"
-title="Municipalities with displacement larger 30 km"
-
-#Trajectory base file
+allMobi="/data/covid/mobility/FB/26PerDay"##/geoStart #"/data/covid/CoronavirusMovementAdministrativeRegionsPerDay"#/2020-04-02_0000.csv"
+filterStr="length_km>30 AND n_crisis>60.0"; 
+filterDir=filterStr.replace(">","").replace(" ","")
+title="Trajectories with displacement {}".format(filterStr)
 pathToMob=os.path.join(allMobi, metricMax[0]+".csv")
-vlayerBase=plotTrajectory(pathToMob, filter="start_polygon_name = end_polygon_name")
+vlayerBase=plotTrajectory(pathToMob, filter=filterStr) #wkt="geometryStartEnd",
 # uri = "file:/{}?delimiter=,&crs=epsg:4326&wktField=geometry&wktType=Line".format(os.path.join(allMobi, metricMax[0]+".csv"))
 # vlayerBase = QgsVectorLayer(uri,metricMax[0][5:13],'delimitedtext')
 # QgsProject.instance().addMapLayer(vlayerBase) #QGIS3
 # vlayerBase.setSubsetString("start_polygon_name = end_polygon_name ") #AND percent_change  > 0
-qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/visuRes/{}.png'.format(metricMax[0]))
+qgis.utils.iface.mapCanvas().saveAsImage('{}/{}/{}.png'.format(mobiVisuRes,filterDir, metricMax[0] ) )
 
 #Start points
 plotStartPoints(pathToMob, filter=None,nLetters=8)

@@ -10,21 +10,21 @@ allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
 # mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
 mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
 
-metric='n_crisis'; metricTh=60; trajectoryLength=30
+metric='n_crisis'; metricTh=0; trajectoryLength=0
 ##################################################################################################################################################################################
 # Plot metric stats for all days mobility
 
-title="Trajectories with displacement larger than {} km ".format(trajectoryLength)
+title="Trajectories with displacement larger than {} km and {} {}".format(trajectoryLength,metric,metricTh)
 metricPerFile=[]
 dayRange=[2,23]
 for day in range(dayRange[0],dayRange[1]): #   
     mobiAtDay=mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day))   
     with open(mobiAtDay, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-        dfMX = pd.read_csv( mobiAtDay )
-#     dfMX=df[df[metric]>metricTh]
+        df = pd.read_csv( mobiAtDay )
+    dfMX=df[df[metric]>metricTh]
     dfMore30K=dfMX[dfMX['length_km']>trajectoryLength][metric]
     _, timePoint=os.path.split(mobiAtDay)
-    metricPerFile.append( [timePoint.replace('.csv',''), np.max(dfMore30K), np.min(dfMore30K), len(dfMore30K)] )
+    metricPerFile.append( [timePoint.replace('.csv',''), np.max(dfMore30K), np.min(dfMore30K),np.mean(dfMore30K), len(dfMore30K)] )
 
 listMaxMetric=[x[1] for x in metricPerFile]
 xAxis=[x for x in range(len(metricPerFile))]
@@ -33,15 +33,18 @@ _=plt.xticks(xAxis,[x[0][8:13] for x in metricPerFile], rotation='vertical');plt
 ax.plot(xAxis,listMaxMetric,'o-', label="{} Max".format(metric) );
 listMinMetric=[x[2] for x in metricPerFile]
 ax.plot(xAxis,listMinMetric,'cx-', label="Min")
+listMeanMetric=[x[3] for x in metricPerFile]
+ax.plot(xAxis,listMeanMetric,'gx-', label="Mean")
 
-listNumMunMetric=[x[3] for x in metricPerFile]# "Number of municipalities with more than 30 km metric disp\\ {}".format(listNumMunMetric)
-ax2 = ax.twinx(); ax2.plot(xAxis,listNumMunMetric,'r^-', label="Trajectories num")
+
+listNumTraject=[x[4] for x in metricPerFile]# "Number of municipalities with more than 30 km metric disp\\ {}".format(listNumTraject)
+ax2 = ax.twinx(); ax2.plot(xAxis,listNumTraject,'r^-', label="Trajectories num")
 ax.set_ylabel(r"{} flow".format(metric)); ax.legend(fontsize="small", loc=6)
 ax2.set_ylabel(r"Number of trajectories"); ax2.legend(fontsize="small", loc=5);plt.grid();plt.show()
 metricRange = [min(listMinMetric), max(listMaxMetric)]; idxMetricRange=[listMinMetric.index(metricRange[0]), listMaxMetric.index(metricRange[1]) ];
-metricRangeStr="{} min={}max={} {}".format(metric, metricPerFile[idxMetricRange[0]][0],metricPerFile[idxMetricRange[1]][0],metricRange); print(metricRangeStr)
+metricRangeStr="{} min={} max={} {} u={}".format(metric, metricPerFile[idxMetricRange[0]][0],metricPerFile[idxMetricRange[1]][0],metricRange, np.mean(listMeanMetric)); print(metricRangeStr)
 fig.suptitle("{}\n {}".format(title, metricRangeStr) )
-fig.savefig(os.path.join(mobiVisuRes,title.replace(' ', '_')+metric+".png"), bbox_inches='tight')
+fig.savefig(os.path.join(mobiVisuRes,title.replace(' ', '_')+".png"), bbox_inches='tight')
 #Result # Metricline min=['2020-04-02_0000', 5303.1999999999998, 10.0, 2296] max=['2020-04-08_0000', 5455.8000000000002, 10.0, 2091] in series
 
 
