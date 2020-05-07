@@ -266,15 +266,18 @@ palenqueDist, palenqueAdminRegIdx = MobilityNodesVoronoiKdtree.query(muniCasesPt
 test_point_dist, test_point_regions = MobilityNodesVoronoiKdtree.query(muniCasesPts)
 plt.scatter(muniCasesPts[:,0], muniCasesPts[:,1], c=test_point_regions,cmap=new_cmap, s=5.5)#'Set3'
 
-casosCentroidsDF.insert(2,'PolygonID',-1);casosCentroidsDF.insert(3,'PolygonName','AAAA');casosCentroidsDF.insert(4,'PolygonPosition','-1.0, -1.0')
+casosCentroidsDF.insert(2,'PolygonID',-1);casosCentroidsDF.insert(3,'PolygonName','AAAA');
+casosCentroidsDF.insert(4,'PolygonPositionX','-1.0'); casosCentroidsDF.insert(5,'PolygonPositionY','-1.0')
 
-muniPolyIDs=[]; muniPolyAdminNames=[]; muniPolyPositions=[];
+muniPolyIDs=[]; muniPolyAdminNames=[]; muniPolyPositionsX=[];muniPolyPositionsY=[];
 for testPtRegion in test_point_regions:
-    muniPolyIDs.append(tReg[testPtRegion]); muniPolyAdminNames.append(tGeoLocName[testPtRegion]);muniPolyPositions.append(str(tGeoLocInv[testPtRegion]))
+    muniPolyIDs.append(tReg[testPtRegion]); muniPolyAdminNames.append(tGeoLocName[testPtRegion]);
+    muniPolyPositionsX.append(str(tGeoLocInv[testPtRegion,0]));muniPolyPositionsY.append(str(tGeoLocInv[testPtRegion,1]))
 
-casosCentroidsDF['PolygonID']=muniPolyIDs; casosCentroidsDF['PolygonName']=muniPolyAdminNames;  casosCentroidsDF['PolygonPosition']=muniPolyPositions
+casosCentroidsDF['PolygonID']=muniPolyIDs; casosCentroidsDF['PolygonName']=muniPolyAdminNames; 
+casosCentroidsDF['PolygonPositionX']=muniPolyPositionsX; casosCentroidsDF['PolygonPositionY']=muniPolyPositionsY
 casosCentroidsDF.to_csv(covCasos.replace('.',"CentroidsWithAdminRegFB."),index=False)
-keepIds=['PolygonID','PolygonName','PolygonPosition','cve_ent','nombre']
+keepIds=['PolygonID','PolygonName','PolygonPositionX','PolygonPositionY','cve_ent','nombre']
 sumIds= list(casosCentroidsDF)
 for kId in keepIds+['X','Y']:  sumIds.remove(kId)
 
@@ -293,7 +296,7 @@ for adminRegID, adminRegName, idx, adminGeoLoc in zip(tReg, tGeoLocName, xrange(
 #     df=df.append(data2k, ignore_index=True, sort=False)
     if len(casosSameAdminRegionDF[keepIds[0]].head(1).values)>0:
         df=df.append(sumAdminReg, ignore_index=True, sort=False)
-        for keID in keepIds[0:3]: df.at[idx-len(emptyAdminRegions),keID]=casosSameAdminRegionDF[keID].head(1).values[0]
+        for keID in keepIds[0:4]: df.at[idx-len(emptyAdminRegions),keID]=casosSameAdminRegionDF[keID].head(1).values[0]
     else:
         emptyAdminRegions.append(adminRegName); #print("Missing elements {} {}".format(adminRegID, adminRegName)); 
         plt.plot(adminGeoLoc[0], adminGeoLoc[1], 'g*',ms=14); 
