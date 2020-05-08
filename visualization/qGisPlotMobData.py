@@ -8,8 +8,11 @@ from qgis.core import QgsProject #QGIS3
 def changeActiveLayerAndPasteStyle(vlayerBase, vlayer):
     qgis.utils.iface.setActiveLayer(vlayerBase)
     iface.actionCopyLayerStyle().trigger() #TODO: turnOff base visibility
+    iface.actionHideSelectedLayers().trigger()
     qgis.utils.iface.setActiveLayer(vlayer)
     iface.actionPasteLayerStyle().trigger()#TODO: turnOn new layer visibility and save Image 
+    
+    
 
 def plotStartPoints(pathToMob, filter=None,nLetters=8):
     #Plot start points

@@ -3,11 +3,11 @@ from qGisPlotMobData import *
 ##########################################################################################################################3
 # pathToCasesCentroids = "/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_ConfirmadosCentroids.csv"
 # vlayerCases=plotCases(pathToCasesCentroids) 
-pathCasesAdminReg = "/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_ConfirmadosCentroidsPerAdminRegionsByStartPt.csv"
-vlayerCasesAdminReg=plotCases(pathCasesAdminReg, posIdx=['PolygonPositionX','PolygonPositionY'],nLetters=7) #TODO: copy visu style
-
-vlayerCasesAdminReg.renderer().setClassAttribute("20-04-2020")#copy style before using
-vlayerCasesAdminReg.triggerRepaint()
+pathCasesAdminRegCum = "/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_ConfirmadosCentroidsPerAdminRegionsByStartPtCumulative.csv"
+# vlayerCasesAdminReg=plotCases(pathCasesAdminReg, posIdx=['PolygonPositionX','PolygonPositionY'],nLetters=7) #TODO: copy visu style
+lCasesAdminRegCum=plotCases(pathCasesAdminRegCum, posIdx=['PolygonPositionX','PolygonPositionY'],nLetters=7) #TODO: copy visu style
+lCasesAdminRegCum.renderer().setClassAttribute("20-04-2020")#copy style before using
+lCasesAdminRegCum.triggerRepaint()
 qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/casos/01_05/{}.png'.format(casesIt))
 # casesIt="TOTALES" #"20-04-2020"# vlayerCasesAdminReg.renderer().setClassAttribute(casesIt)
 
@@ -19,7 +19,7 @@ qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/casos/01_05/{}.png'.format
 metricMax=['2020-04-02_MX', 4635, 61, 215.47416020671835, 774] #ByStartPt  #in series
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay"##/geoStart #"/data/covid/CoronavirusMovementAdministrativeRegionsPerDay"#/2020-04-02_0000.csv"
-filterStr="length_km>30 AND n_crisis>60.0"; 
+filterStr="length_km>30 AND n_crisis>60"; 
 filterDir=filterStr.replace(">","").replace(" ","")
 title="Trajectories with displacement {}".format(filterStr)
 pathToMob=os.path.join(allMobi, metricMax[0]+".csv")
@@ -30,17 +30,10 @@ vlayerBase=plotTrajectory(pathToMob, filter=filterStr) #wkt="geometryStartEnd",
 # vlayerBase.setSubsetString("start_polygon_name = end_polygon_name ") #AND percent_change  > 0
 qgis.utils.iface.mapCanvas().saveAsImage('{}/{}/{}.png'.format(mobiVisuRes,filterDir, metricMax[0] ) )
 
-#Start points
-plotStartPoints(pathToMob, filter=None,nLetters=8)
-# uri = "file:/{}?delimiter=,&crs=epsg:4326&xField=start_lon&yField=start_lat".format(os.path.join(allMobi, metricMax[0]+".csv"))
-# vlayerStartPts = QgsVectorLayer(uri,metricMax[0][5:13]+'StartPts','delimitedtext')
-# QgsProject.instance().addMapLayer(vlayerStartPts) #QGIS3
-
-
 #Next days trajectories
 metricMax=['2020-04-17_MX', 4635, 61, 215.47416020671835, 774] #in series
 pathToMob=os.path.join(allMobi, metricMax[0]+".csv")
-vlayerNew=plotTrajectory(pathToMob, filter="length_km>30 AND flow >60.0 ")
+vlayerNew=plotTrajectory(pathToMob, filter=filterStr)
 # uri = "file:/{}?delimiter=,&crs=epsg:4326&wktField=geometry&wktType=Line".format(os.path.join(allMobi, metricMax[0]+".csv"))
 # vlayerNew = QgsVectorLayer(uri,metricMax[0][5:13],'delimitedtext')
 # QgsProject.instance().addMapLayer(vlayerNew) #QGIS3
@@ -52,37 +45,17 @@ changeActiveLayerAndPasteStyle(vlayerBase, vlayerNew)
 # qgis.utils.iface.setActiveLayer(vlayerNew)
 # iface.actionPasteLayerStyle().trigger()
 
-ml = QgsMapCanvasLayer(vlayerNew)
-ml.setVisible(False)
-
-
-
 qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/visuRes/{}.png'.format(metricMax[0]))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#Start points
+##########################################################################################################################3
+plotStartPoints(pathToMob, filter=None,nLetters=8)
+# uri = "file:/{}?delimiter=,&crs=epsg:4326&xField=start_lon&yField=start_lat".format(os.path.join(allMobi, metricMax[0]+".csv"))
+# vlayerStartPts = QgsVectorLayer(uri,metricMax[0][5:13]+'StartPts','delimitedtext')
+# QgsProject.instance().addMapLayer(vlayerStartPts) #QGIS3
+# ml = QgsMapCanvasLayer(vlayerNew)
+# ml.setVisible(False)
 
 
 
