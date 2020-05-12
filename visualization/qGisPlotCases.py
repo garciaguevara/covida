@@ -12,6 +12,12 @@ qgis.utils.iface.mapCanvas().saveAsImage('/data/covid/casos/01_05/{}.png'.format
 # casesIt="TOTALES" #"20-04-2020"# vlayerCasesAdminReg.renderer().setClassAttribute(casesIt)
 
 
+
+
+
+
+
+
 ##########################################################################################################################3
 # BaselineMax=['2020-04-08_0000', 5455.8000000000002, 10.0, 2091]# in series 3 per day
 # flow min=['2020-04-12_MX', 2152, 61, 182.85438596491227, 570]

@@ -7,7 +7,7 @@ inst = QtWidgets.QApplication.instance()
 
 allMobi="/data/covid/mobility/FB/26PerDay"
 mobiVisuRes="/data/covid/visuRes"
-dayRange=[2,26]
+dayRange=[3,23]
 filterStr="length_km>30 AND n_crisis>60"; filterDir=filterStr.replace(">","").replace(" ","")
 for day in range(dayRange[0],dayRange[1]):
 #day =15
