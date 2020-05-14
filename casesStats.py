@@ -10,14 +10,14 @@ from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
 
-def computeCasesStats():
+def computeCumulativeCases():
     with open(casesPerAdmReg, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         df = pd.read_csv( casesPerAdmReg )
     
-    df.loc[:, '05-01-2020':'01-05-2020']=df.loc[:, '05-01-2020':'01-05-2020'].cumsum(axis=1)
+    df.loc[:, '07-01-2020':'12-05-2020']=df.loc[:, '07-01-2020':'12-05-2020'].cumsum(axis=1)
     
     df.to_csv(casesPerAdmReg.replace('.csv', 'Cumulative.csv'),index=False)
-    print("Missing elements {} {}".format(emptyAdminRegions, len(emptyAdminRegions) ) )
+    print("computeCumulativeCases {}".format(casesPerAdmReg.replace('.csv', 'Cumulative.csv') ) )
 
 
 def addCasesToMobility():
@@ -25,7 +25,7 @@ def addCasesToMobility():
     with open(pathCasesAdminRegCum, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         casesDF = pd.read_csv( pathCasesAdminRegCum )
 
-    dayRange=[2,22]
+    dayRange=[2,23]
     for day in range(dayRange[0],dayRange[1]):
         #day =15
         pathToMob="{}/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX".format(day))
@@ -53,7 +53,7 @@ mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
 # mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
 mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
-covCasos="/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_Confirmados.csv" #/data/covid/casos/27_04
+covCasos="/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.csv" #/data/covid/casos/27_04 # 01_05/Casos_Diarios_Estado_Nacional_Confirmados  #TODO: factorize paths and files for all scripts
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 #Join databases per day
@@ -64,7 +64,7 @@ joinByMobGeo="ByStartPt"#""
 casesPerAdmReg=covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo))
 
 
-# computeCasesStats()
+# computeCumulativeCases()
 addCasesToMobility()
 
 

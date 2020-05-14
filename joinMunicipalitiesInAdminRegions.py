@@ -9,94 +9,8 @@ import unicodedata
 from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
+import utils as ut
 
-mobiVisuRes="/data/covid/visuRes"
-allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
-# mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
-mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
-covCasos="/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_Confirmados.csv" #/data/covid/casos/27_04
-centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
-##################################################################################################################################################################################
-#Join databases per day
-# title="Municipalities with displacement larger 30 km per day"
-baselinePerFile=[]; getCountry='MX'#'GT'#
-
-joinByMobGeo="ByStartPt"#""
-
-def numberOfNonMatchLetters(a,b):
-    u=zip(a,b)
-    d=dict(u)    
-    x=0
-    for i,j in d.items():
-        if i==j:
-            x=+1
-    return x
-
-def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=False, verbose=True):
-    """
-    Creates a random colormap to be used together with matplotlib. Useful for segmentation tasks
-    :param nlabels: Number of labels (size of colormap)
-    :param type: 'bright' for strong colors, 'soft' for pastel colors
-    :param first_color_black: Option to use first color as black, True or False
-    :param last_color_black: Option to use last color as black, True or False
-    :param verbose: Prints the number of labels and shows the colormap. True or False
-    :return: colormap for matplotlib
-    """
-
-    if type not in ('bright', 'soft'):
-        print ('Please choose "bright" or "soft" for type')
-        return
-
-    if verbose:
-        print('Number of labels: ' + str(nlabels))
-
-    # Generate color map for bright colors, based on hsv
-    if type == 'bright':
-        randHSVcolors = [(np.random.uniform(low=0.0, high=1),
-                          np.random.uniform(low=0.2, high=1),
-                          np.random.uniform(low=0.9, high=1)) for i in xrange(nlabels)]
-
-        # Convert HSV list to RGB
-        randRGBcolors = []
-        for HSVcolor in randHSVcolors:
-            randRGBcolors.append(colorsys.hsv_to_rgb(HSVcolor[0], HSVcolor[1], HSVcolor[2]))
-
-        if first_color_black:
-            randRGBcolors[0] = [0, 0, 0]
-
-        if last_color_black:
-            randRGBcolors[-1] = [0, 0, 0]
-
-        random_colormap = LinearSegmentedColormap.from_list('new_map', randRGBcolors, N=nlabels)
-
-    # Generate soft pastel colors, by limiting the RGB spectrum
-    if type == 'soft':
-        low = 0.6
-        high = 0.95
-        randRGBcolors = [(np.random.uniform(low=low, high=high),
-                          np.random.uniform(low=low, high=high),
-                          np.random.uniform(low=low, high=high)) for i in xrange(nlabels)]
-
-        if first_color_black:
-            randRGBcolors[0] = [0, 0, 0]
-
-        if last_color_black:
-            randRGBcolors[-1] = [0, 0, 0]
-        random_colormap = LinearSegmentedColormap.from_list('new_map', randRGBcolors, N=nlabels)
-
-    # Display colorbar
-    if verbose:
-        from matplotlib import colors, colorbar
-        from matplotlib import pyplot as plt
-        fig, ax = plt.subplots(1, 1, figsize=(15, 0.5))
-
-        bounds = np.linspace(0, nlabels, nlabels + 1)
-        norm = colors.BoundaryNorm(bounds, nlabels)
-
-        cb = colorbar.ColorbarBase(ax, cmap=random_colormap, norm=norm, spacing='proportional', ticks=None,
-                                   boundaries=bounds, format='%1i', orientation=u'horizontal')
-
-    return random_colormap
 
 def addCentroidToMunicipalCases(casosDF):            
     with open(centroidPath, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
@@ -111,7 +25,7 @@ def addCentroidToMunicipalCases(casosDF):
         encoded1 = unicodedata.normalize('NFC', casosMun["nombre"].decode('utf8'))
         encoded2 = unicodedata.normalize('NFC', centroidMun["NOM_MUN"].values[0].decode('utf8'))
         
-        if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and numberOfNonMatchLetters(encoded1,encoded2)<3:
+        if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and ut.numberOfNonMatchLetters(encoded1,encoded2)<3:
             casosDF.at[idx,'X']=centroidMun['X'].values[0]
             casosDF.at[idx,'Y']=centroidMun['Y'].values[0]
 #             dropIdxsB.append(centroidMun.idx)#(casosMun["cve_ent"])
@@ -211,6 +125,21 @@ def mergeMobilityCoord(dayRange):
               
     return totalReg, totalGeoLoc,totalGeoLocName, totalLargerChangeLoc, adminRegPerDay
 
+
+#TODO: factorize paths and files for all scripts
+mobiVisuRes="/data/covid/visuRes"
+allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
+# mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
+mobiTempPerDay="{}2020-04-AAAA.csv".format(allMobi)
+covCasos="/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.csv" #/data/covid/casos/27_04 # 01_05/Casos_Diarios_Estado_Nacional_Confirmados 
+
+centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
+##################################################################################################################################################################################
+#Join databases per day
+# title="Municipalities with displacement larger 30 km per day"
+baselinePerFile=[]; getCountry='MX'#'GT'#
+
+joinByMobGeo="ByStartPt"#""
 dayRange=[2,23] #TODO: Separate from 23/04 where only state info is given
 
 if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
@@ -244,8 +173,9 @@ with open(covCasos.replace('.',"Centroids."), 'r') as f:  #os.path.join(allMobi,
      casosCentroidsDF = pd.read_csv( covCasos.replace('.',"Centroids.") )
 ##################################################################################################################################################################################
 
+#TODO: def adminRegionsByMunicipalities():
 muniCasesPts=np.array([list(casosCentroidsDF['X'].values),list(casosCentroidsDF['Y'].values)]); muniCasesPts=muniCasesPts.transpose()
-new_cmap = rand_cmap(50000, type='bright', first_color_black=True, last_color_black=False, verbose=False)
+new_cmap = ut.rand_cmap(50000, type='bright', first_color_black=True, last_color_black=False, verbose=False)
 tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
 tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]
 vorInv = Voronoi(tGeoLocInv)

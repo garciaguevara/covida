@@ -3,7 +3,7 @@ from qGisPlotMobData import *
 ##########################################################################################################################3
 # pathToCasesCentroids = "/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_ConfirmadosCentroids.csv"
 # vlayerCases=plotCases(pathToCasesCentroids) 
-pathCasesAdminRegCum = "/data/covid/casos/01_05/Casos_Diarios_Estado_Nacional_ConfirmadosCentroidsPerAdminRegionsByStartPtCumulative.csv"
+pathCasesAdminRegCum = "/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512CentroidsPerAdminRegionsByStartPtCumulative.csv"
 # vlayerCasesAdminReg=plotCases(pathCasesAdminReg, posIdx=['PolygonPositionX','PolygonPositionY'],nLetters=7) #TODO: copy visu style
 lCasesAdminRegCum=plotCases(pathCasesAdminRegCum, posIdx=['PolygonPositionX','PolygonPositionY'],nLetters=7) #TODO: copy visu style
 lCasesAdminRegCum.renderer().setClassAttribute("20-04-2020")#copy style before using

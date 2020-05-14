@@ -11,8 +11,6 @@ def changeActiveLayerAndPasteStyle(vlayerBase, vlayer):
     iface.actionHideSelectedLayers().trigger()
     qgis.utils.iface.setActiveLayer(vlayer)
     iface.actionPasteLayerStyle().trigger()#TODO: turnOn new layer visibility and save Image 
-    
-    
 
 def plotStartPoints(pathToMob, filter=None,nLetters=8):
     #Plot start points
