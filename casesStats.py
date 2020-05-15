@@ -20,12 +20,11 @@ def computeCumulativeCases():
     print("computeCumulativeCases {}".format(casesPerAdmReg.replace('.csv', 'Cumulative.csv') ) )
 
 
-def addCasesToMobility():
+def addCasesToMobility(dayRange):
     pathCasesAdminRegCum = casesPerAdmReg.replace(".", "Cumulative.")
     with open(pathCasesAdminRegCum, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         casesDF = pd.read_csv( pathCasesAdminRegCum )
-
-    dayRange=[2,23]
+    
     for day in range(dayRange[0],dayRange[1]):
         #day =15
         pathToMob="{}/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX".format(day))
@@ -45,9 +44,23 @@ def addCasesToMobility():
                 mobPerDayDF[mobPerDayDF['start_polygon_id']==admRegID]=O_idD                 
             else: print ("Start adminReg {} not in trajectories {}".format(admRegID, date) )
             
-
         mobPerDayDF.to_csv(pathToMob.replace("Day/","Day/wCases/").replace('.',"Cases."),index=False) 
         print("Add cases to mobility {}".format(pathToMob) )
+
+
+def addStartPtGeometryToMobility(dayRange):
+    for day in range(dayRange[0],dayRange[1]): #
+        mobiCases="{}wCases/2020-04-AAAACases.csv".format(allMobi).replace('AAAA',"{:02d}_MX".format(day))
+        with open(mobiCases, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+            mobiDF = pd.read_csv( mobiCases )
+        
+        mobiPerDayStartPt="{}geoStart/2020-04-AAAAByStartPt.csv".format(allMobi).replace('AAAA',"{:02d}_MX".format(day))
+        with open(mobiPerDayStartPt, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+            mobiDFStartPt = pd.read_csv( mobiPerDayStartPt )
+        
+        mobiDF=pd.concat([mobiDF, mobiDFStartPt["geometryStartEnd"]], axis=1)
+        mobiDF.to_csv(mobiCases, index=False)
+
 
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
@@ -59,12 +72,14 @@ centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/I
 #Join databases per day
 # title="Municipalities with displacement larger 30 km per day"
 baselinePerFile=[]; getCountry='MX'#'GT'#
+dayRange=[2,23]
 
 joinByMobGeo="ByStartPt"#""
 casesPerAdmReg=covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo))
 
 
 # computeCumulativeCases()
-addCasesToMobility()
+# addCasesToMobility(dayRange)
 
+addStartPtGeometryToMobility(dayRange)
 

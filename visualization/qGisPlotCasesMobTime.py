@@ -22,7 +22,7 @@ dayRange=[2,22]
 filterStr="length_km>30 AND (n_crisis/PoblacionStart)*100000.0>10.0 AND (CumCasesStart/PoblacionStart)*100000.0>10.0";
 #filterStr="length_km>30 AND n_crisis>60 AND (CumCasesStart/PoblacionStart)*100000.0>10.0"
 filterDir= "length_km30"
-cumCasesScale = cv.imread('/data/covid/visuRes/length_km30/n_crisis60CumCasesPer100k10/cumCasesScale.png')
+cumCasesScale = cv.imread('/data/covid/visuRes/length_km30/casesFuture100k.png') #/data/covid/visuRes/length_km30/n_crisis60CumCasesPer100k10/cumCasesScale.png
 #trajScale = cv.imread('/data/covid/visuRes/length_km30/n_crisis60CumCasesPer100k10/trajScale.png')
 trajScale = cv.imread('/data/covid/visuRes/length_km30/Per100kn_crisisCumCases10/trajPer100k.png')
 dayLetter=['J','V','S','D','L','M','Mi']
@@ -52,7 +52,7 @@ def prepareMap():
 #        if not idC == len(casesLargerN_DF)-1: filterStrDate+="start_polygon_id={} or ".format(lCase)
 #        else: filterStrDate+="start_polygon_id={} ) ".format(lCase)    
     
-    vlayerNew=plotTrajectory(pathToMob, filter=filterStr)        
+    vlayerNew=plotTrajectory(pathToMob,wkt="geometryStartEnd", filter=filterStr)        
     changeActiveLayerAndPasteStyle(vlayerBase, vlayerNew)    
     vlayerNew.triggerRepaint()        
     vlayerBase=vlayerNew    
