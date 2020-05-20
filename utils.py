@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.pylab as pylt
 import numpy as np
 from scipy.spatial import cKDTree
 from scipy.spatial import Voronoi, voronoi_plot_2d
@@ -18,6 +20,27 @@ def numberOfNonMatchLetters(a,b):
         if i==j:
             x=+1
     return x
+
+
+
+class mobilityMatrixMetric:
+    def __init__(self,dateMob, maxMob,maxTrajMob, maxOffDiagMob,maxTrajOffDiagMob):
+        self.date=dateMob        
+        self.max=maxMob
+        self.maxTraj=maxTrajMob        
+        self.maxOffDiag=maxOffDiagMob
+        self.maxTrajOffDiag=maxTrajOffDiagMob
+
+def fixInitialValueColorMap():
+    cmap = pylt.cm.jet  # define the colormap
+    # extract all colors from the .jet map
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    # force the first color entry to be grey
+    cmaplist[0] = (.5, .5, .5, 1.0)        
+    # create the new map
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
+    return cmap
+
 
 
 def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=False, verbose=True):

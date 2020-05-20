@@ -1,8 +1,6 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.pylab as pylt
 
 import numpy as np
 from scipy.spatial import cKDTree
@@ -17,7 +15,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
 import matplotlib.colors as colors
-
+import utils as ut
 
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
@@ -30,15 +28,6 @@ baselinePerFile=[]; getCountry='MX'#'GT'#
 joinByMobGeo="ByStartPt"#""
 
 
-def fixInitialValueColorMap():
-    cmap = pylt.cm.jet  # define the colormap
-    # extract all colors from the .jet map
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    # force the first color entry to be grey
-    cmaplist[0] = (.5, .5, .5, 1.0)        
-    # create the new map
-    cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
-    return cmap
 
 
 
@@ -112,21 +101,45 @@ def computeMobilityMatrix(dayRange):
         _,mobDate=os.path.split(mobMatrixFile); fig.suptitle("AdminRegions facebook mobility Matrix {}".format(mobDate.replace("_MXByStartPt.csv","")));
         fig.savefig(mobMatrixFile.replace("csv", "png").replace("mobMatrices", "mobMatrices/plots"), bbox_inches='tight');
         
-        cmap=fixInitialValueColorMap()
+        cmap=ut.fixInitialValueColorMap()
         fig2 = plt.figure(figsize=(11.0, 11.0));ax2 = fig2.add_subplot(111);
         pos2=ax2.imshow(mobility.toarray(), aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
         fig2.colorbar(pos2, ax=ax2) ;ax2.set_ylabel("Origin"); ax2.set_xlabel("Destination")
         #'Ecatepec de Morelos'->'Iztapalapa' mobility[714,706];tGeoLocName[714];tGeoLocName[706];mobility[682,682];
         
 
+def plotMobmatrix(mobMetroArea,namesMetroArea,ax,fig, verbLeg=True):
+    cmap=ut.fixInitialValueColorMap()
+    pos=ax.imshow(mobMetroArea, aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50]    
+    xAxis=[x for x in range(len(namesMetroArea))]; 
+    
+    plt.xticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical')        
+    fig.colorbar(pos, ax=ax) ; 
+    if verbLeg:
+        ax.set_ylabel("Origin"); plt.yticks(xAxis,[unicode(x,'utf-8') for x in namesMetroArea])
+    else:
+        plt.yticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea])
+    
+    ax.set_xlabel("Destination")
+
 def getMobilityPerMetropolitanAreaMatrix(dayRange):
     MetroArea="MTY"      
+    
+    maxMobiFile=allMobi+"mobMatrices/metro/MTY/plots/raw/maxPerDay.pkl"
+    if os.path.exists(maxMobiFile):
+        with open(maxMobiFile, 'rb') as extentFilePkl: #save selected hypothesis
+            mobMaxPerDay=pickle.load(extentFilePkl)
+        return mobMaxPerDay    
+    
     ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) 
     ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
     if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
         with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
             tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)    
+
+    #TODO: def getMetroByMobility():
     
+    #TODO: def getMetroByDistance():
     tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
     tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]; tReg=np.array(tReg); tGeoLocName=np.array(tGeoLocName)
     tree = spatial.KDTree(tGeoLocInv) #KDTree(
@@ -144,8 +157,10 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange):
     df.to_csv(covCasos.replace('.',"CentroidsPerAdminRegions{}_Metro{}.".format(joinByMobGeo,MetroArea)),index=False)
     print("MetroArea {}\n".format( covCasos.replace('.',"CentroidsPerAdminRegions{}_Metro{}.".format(joinByMobGeo,MetroArea)) ) )
     
-#     adminRegPerDay=[]; totalReg=[];totalGeoLoc=[]; totalGeoLocName=[];
-#     totalRegSet=set([]); totalLargerChangeLoc=[]       
+    mobMaxPerDay=[]; #totalReg=[];totalGeoLoc=[]; totalGeoLocName=[];
+#     totalRegSet=set([]); totalLargerChangeLoc=[] 
+      
+    #TODO: def extractMobilityFromMunicpalities():
     for day in range(dayRange[0],dayRange[1]): #
         mobMatrixFile="{}mobMatrices/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX{}".format(day,joinByMobGeo))
         mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
@@ -156,14 +171,38 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange):
                 mobMetroArea[idxMetroR, idxMetroC]=mobility[idxR, idxC] #mobility[nearest_ind[4], nearest_ind[4]]
 
         mobMatrixFile="{}mobMatrices/{}/2020-04-AAAA.csv".format(allMobi,"metro/MTY").replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
-        io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)
+        io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)        
         
-        cmap=fixInitialValueColorMap()
-        fig = plt.figure(figsize=(11.0, 11.0));ax = fig.add_subplot(111);
-        pos=ax.imshow(mobMetroArea.toarray(), aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
-        fig.colorbar(pos, ax=ax) ; ax.set_ylabel("Origin"); ax.set_xlabel("Destination")        
-        _,mobDate=os.path.split(mobMatrixFile); fig.suptitle("AdminRegions facebook mobility Matrix {}".format(mobDate.replace("_MXByStartPt{}.csv".format(MetroArea)," "+MetroArea)));
-        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots"), bbox_inches='tight');
+        fig = plt.figure(figsize=(12.0, 5.0));
+        ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
+        plotMobmatrix(mobMetroArea,namesMetroArea,ax, fig)        
+        
+        _,mobDate=os.path.split(mobMatrixFile); dateMetro=mobDate.replace("_MXByStartPt{}.csv".format(MetroArea)," "+MetroArea)       
+        
+
+        maxMob = np.max(mobMetroArea)
+        muni = np.argmax(mobMetroArea)
+        muniOrg=muni/len(namesMetroArea); muniDest=muni%len(namesMetroArea)
+        maxTraj="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], nearest_ind[muniOrg], nearest_ind[muniDest])
+        
+#         mask = np.ones(mobMetroArea.shape, dtype=bool); np.fill_diagonal(mask, 0); 
+#         maxOffDiag = mobMetroArea[mask].max(); maxOffDiagNumi = mobMetroArea[mask].argmax();        
+        np.fill_diagonal(mobMetroArea, 0)
+        maxOffDiag = mobMetroArea.max();
+        muniOffDiag = mobMetroArea.argmax()
+        muniOrg=muniOffDiag/len(namesMetroArea); muniDest=muniOffDiag%len(namesMetroArea); #mobMetroArea[muniOrg,muniDest]
+        maxTrajOffDiag="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], nearest_ind[muniOrg], nearest_ind[muniDest])         
+        ax2 = fig.add_subplot(122); plotMobmatrix(mobMetroArea,namesMetroArea,ax2, fig, verbLeg=False) 
+
+        mobMaxPerDay.append( ut.mobilityMatrixMetric( dateMetro, maxMob, unicode(maxTraj,'utf-8'), maxOffDiag, unicode(maxTrajOffDiag,'utf-8') ) )    
+              
+        fig.suptitle( unicode("AdminRegions facebook mobility Matrix {} OffDiag max {} traj {}".format( dateMetro, maxOffDiag, maxTrajOffDiag), 'utf-8') );
+        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots/raw"), bbox_inches='tight')
+        
+
+
+    with open(maxMobiFile, 'wb') as extentFilePkl: #save selected hypothesis
+        pickle.dump(mobMaxPerDay, extentFilePkl)
         #Test #namesMetroArea[5];namesMetroArea[12];mobMetroArea[5,12]
 #         fig2 = plt.figure(figsize=(11.0, 11.0));ax2 = fig2.add_subplot(111);
 #         pos2=ax2.imshow(mobility.toarray(), aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
@@ -179,6 +218,47 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange):
 # fig.colorbar(pos, ax=ax)
 #         pcm = ax[0].pcolor(X, Y, Z, norm=colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
 #         fig.colorbar(pcm, ax=ax[0], extend='max')
+
+
+def mobilityWithCasesPer100kMetro():
+    
+    for day in range(dayRange[0],dayRange[1]): #
+        mobMatrixFile="{}mobMatrices/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX{}".format(day,joinByMobGeo))
+        mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
+        
+        mobMetroArea=lil_matrix( ( len(nearest_ind), len(nearest_ind) ), dtype=int64 )
+        for idxMetroR, idxR in zip(xrange(len(nearest_ind)), nearest_ind):
+            for idxMetroC, idxC in zip(xrange(len(nearest_ind)), nearest_ind):
+                mobMetroArea[idxMetroR, idxMetroC]=mobility[idxR, idxC] #mobility[nearest_ind[4], nearest_ind[4]]
+
+        mobMatrixFile="{}mobMatrices/{}/2020-04-AAAA.csv".format(allMobi,"metro/MTY").replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
+        io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)
+        
+        cmap=ut.fixInitialValueColorMap()
+        fig = plt.figure(figsize=(11.0, 11.0));ax = fig.add_subplot(222);
+        pos=ax.imshow(mobMetroArea.toarray(), aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
+        xAxis=[x for x in range(len(namesMetroArea))]
+        plt.yticks(xAxis,[unicode(x,'utf-8') for x in namesMetroArea])
+        plt.xticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical')
+        
+        fig.colorbar(pos, ax=ax) ; ax.set_ylabel("Origin"); ax.set_xlabel("Destination")        
+        _,mobDate=os.path.split(mobMatrixFile); fig.suptitle("AdminRegions facebook mobility Matrix {}".format(mobDate.replace("_MXByStartPt{}.csv".format(MetroArea)," "+MetroArea)));
+        
+        ax1 = fig.add_subplot(221);
+        pos=ax1.imshow(mobMetroArea.toarray()[:,0:2], aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
+
+        ax4 = fig.add_subplot(224);
+        pos=ax4.imshow(mobMetroArea.toarray()[0:2,:], aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
+        
+        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots"), bbox_inches='tight');
+    
+    
+    
+    
+    
+    
+
+
 
 
         

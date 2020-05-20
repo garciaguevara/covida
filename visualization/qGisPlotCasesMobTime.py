@@ -14,7 +14,7 @@ extentFile="/data/covid/visuRes/temp/extents/extentsDict.pkl"
 #with open(extentFile, 'wb') as extentFilePkl: #save selected hypothesis
 #    pickle.dump(extents, extentFilePkl)
 with open(extentFile, 'rb') as extentFilePkl:
-    savedExtents = pickle.load(extentFilePkl)
+    extents = pickle.load(extentFilePkl)
 locations=['Bajio', 'Centre', 'SouthCentre', 'South', 'North', 'SouthEast']
 ithLoc=0
 
@@ -29,14 +29,15 @@ ithLoc=0
 wCases="wCases"
 allMobi="/data/covid/mobility/FB/26PerDay/{}".format(wCases)
 mobiVisuRes="/data/covid/visuRes"
-dayRange=[2,6]
-filterStr="(n_crisis/PoblacionStart)*100000.0>6.0 AND (CumCasesStart/PoblacionStart)*100000.0>10.0";
+dayRange=[2,23]
+mobiTh="10.0"; casesTh="3.0"; 
+filterStr="(n_crisis/PoblacionStart)*100000.0>{} AND (CumCasesStart/PoblacionStart)*100000.0> {}".format(mobiTh,casesTh);
 #filterStr="length_km>30 AND n_crisis>60 AND (CumCasesStart/PoblacionStart)*100000.0>10.0"
 filterDir= "per100k"
-threshStr="6x"
+threshStr="_M{}_C{}".format(mobiTh[0:2],casesTh[0:2])
 cumCasesScale = cv.imread('/data/covid/visuRes/length_km30/casesFuture100k.png') #/data/covid/visuRes/length_km30/n_crisis60CumCasesPer100k10/cumCasesScale.png
 #trajScale = cv.imread('/data/covid/visuRes/length_km30/n_crisis60CumCasesPer100k10/trajScale.png')
-trajScale = cv.imread('/data/covid/visuRes/6per100k/national/traject6per100k.png') #/data/covid/visuRes/length_km30/Per100kn_crisisCumCases10/trajPer100k.png')
+trajScale = cv.imread('/data/covid/visuRes/per100k/trajPer100k.png') #/data/covid/visuRes/6per100k/national/traject6per100k.png#/data/covid/visuRes/length_km30/Per100kn_crisisCumCases10/trajPer100k.png')
 dayLetter=['J','V','S','D','L','M','Mi']
 day=dayRange[0]
 daysFuture=14
@@ -74,7 +75,7 @@ def prepareMap():
     iface.mapCanvas().setExtent(extRect)
     lCasesAdminRegCumFuture.triggerRepaint()
         
-    QTimer.singleShot(1000, exportMap) # Wait a second and export the map
+    QTimer.singleShot(5000, exportMap) # Wait a second and export the map
 
 def exportMap():
     global day, ithLoc
@@ -89,12 +90,30 @@ def exportMap():
     mapIm = cv.imread( mobCasesIm )
 #     plt.imshow(mapIm); plt.show()
 #     plt.imshow( mapIm[ 550:(550+cumCasesScale.shape[0]), 350:(350+cumCasesScale.shape[1]), :] ); plt.show()    
-    mapIm[ (mapIm.shape[0]-cumCasesScale.shape[0]):, :cumCasesScale.shape[1], :]=cumCasesScale #mapIm.shape[0]-
-    mapIm[  (mapIm.shape[0]-trajScale.shape[0]):, (mapIm.shape[1]-trajScale.shape[1]):, :]=trajScale #:trajScale.shape[0]
+
+    if loca == "Bajio" or loca == "Centre"or loca == "North":
+        mapIm[ (mapIm.shape[0]-cumCasesScale.shape[0]):, :cumCasesScale.shape[1], :]=cumCasesScale #mapIm.shape[0]-
+        mapIm[  :trajScale.shape[0], (mapIm.shape[1]-trajScale.shape[1]):, :]=trajScale #:trajScale.shape[0]
+    elif loca == "SouthCentre":
+        mapIm[ (mapIm.shape[0]-cumCasesScale.shape[0]):, :cumCasesScale.shape[1], :]=cumCasesScale #mapIm.shape[0]-
+        mapIm[  :trajScale.shape[0], :trajScale.shape[1], :]=trajScale #:trajScale.shape[0]
+    elif loca == "SouthEast":
+        bx= mapIm.shape[0]-trajScale.shape[0]; by=mapIm.shape[1]-trajScale.shape[1]
+        mapIm[ (bx-cumCasesScale.shape[0]):bx, (mapIm.shape[1]-cumCasesScale.shape[1]):, :]=cumCasesScale #mapIm.shape[0]-
+        mapIm[  bx:, by:, :]=trajScale #:trajScale.shape[0]
+    else:
+        mapIm[ (mapIm.shape[0]-cumCasesScale.shape[0]):, :cumCasesScale.shape[1], :]=cumCasesScale #mapIm.shape[0]-
+        mapIm[  (mapIm.shape[0]-trajScale.shape[0]):, (mapIm.shape[1]-trajScale.shape[1]):, :]=trajScale #:trajScale.shape[0]
+    
+    label=os.path.split(mobCasesIm)[1].replace(".png","");  font = cv.FONT_HERSHEY_SIMPLEX
+    label+=" mobiTH= {} CasesTH= {} Per100k".format(mobiTh,casesTh)
+    cv.putText(mapIm,label,(400,30), font, 0.7,(255,0,255),1,cv.LINE_AA)
+#     cv.putText(img,fileDate,(600,70), font, 2,(0,0,0),8,cv2.LINE_AA)
+    
     cv.imwrite(mobCasesIm, mapIm)
     
     if day < dayRange[1]:
-        QTimer.singleShot(1000, prepareMap) # Wait a second and prepare next map
+        QTimer.singleShot(5000, prepareMap) # Wait a second and prepare next map
     if ithLoc==len(locations)-1:
         day += 1
         ithLoc=0
