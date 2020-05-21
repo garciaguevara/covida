@@ -31,7 +31,7 @@ allMobi="/data/covid/mobility/FB/26PerDay/{}".format(wCases)
 mobiVisuRes="/data/covid/visuRes"
 dayRange=[2,23]
 mobiTh="10.0"; casesTh="3.0"; 
-filterStr="(n_crisis/PoblacionStart)*100000.0>{} AND (CumCasesStart/PoblacionStart)*100000.0> {}".format(mobiTh,casesTh);
+filterStr="(n_crisis*100000.0/PoblacionStart)>{} AND (CumCasesStart*100000.0/PoblacionStart)> {}".format(mobiTh,casesTh);
 #filterStr="length_km>30 AND n_crisis>60 AND (CumCasesStart/PoblacionStart)*100000.0>10.0"
 filterDir= "per100k"
 threshStr="_M{}_C{}".format(mobiTh[0:2],casesTh[0:2])
@@ -46,7 +46,7 @@ def prepareMap():
     global vlayerBase, ithLoc
     if ithLoc==0:
         dateStr="{:02d}-04-2020".format(day)
-        date="( \"{}\" / \"poblacion\" ) * 100000.0".format(dateStr) #  ( "22-04-2020"  /  "poblacion"  ) * 100000 
+        date="( \"{}\"* 100000.0 / \"poblacion\" ) ".format(dateStr) #  ( "22-04-2020"  /  "poblacion"  ) * 100000 
         lCasesAdminRegCum.renderer().setClassAttribute(date)  
         
         date_1 = datetime.datetime.strptime(dateStr, "%d-%m-%Y")
