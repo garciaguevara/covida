@@ -49,6 +49,11 @@ def plotCases(pathToCasesCentroids, posIdx=['X','Y'], filter=None,nLetters=8):
     return vlayerCases
 
 
+def main():
+    print ("HOLA!")
+
+if __name__ == "__main__":
+    main()
 
 
 

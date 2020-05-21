@@ -190,9 +190,12 @@ def adminRegionsByMunicipalities():
 #Join databases per day
 # title="Municipalities with displacement larger 30 km per day"
 
-
-
 #TODO: factorize paths and files for all scripts
+
+# #TODO: def main():
+#     print ("HOLA!")
+# if __name__ == "__main__":
+#     main()
 
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"

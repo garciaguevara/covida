@@ -108,3 +108,11 @@ def rand_cmap(nlabels, type='bright', first_color_black=True, last_color_black=F
                                    boundaries=bounds, format='%1i', orientation=u'horizontal')
 
     return random_colormap
+
+def main():
+    print ("HOLA!")
+
+if __name__ == "__main__":
+    main()
+
+

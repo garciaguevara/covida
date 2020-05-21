@@ -3,15 +3,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-mobiVisuRes="/data/covid/visuRes"
-allMobi="/data/covid/fb26PerDay"#/2020-04-02_0000.csv"
-mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
-mobiTempPerDay="/data/covid/fb26PerDay/2020-04-AAAA.csv"
-##################################################################################################################################################################################
-#Join databases per day
-title="Municipalities with displacement larger 30 km per day"
-baselinePerFile=[]; getCountry='MX'#'GT'#
-
 # def computeFlow(dataMob):
 #     dataMob.insert(20,'flow',0)
 #     for idx, traj in dataMob.iterrows():
@@ -42,23 +33,39 @@ def mergeMobilities(dfA, dfB):
     return dfMerged
 
 
-for day in range(2,26): #day=3#
-    with open(mobiTemp.replace('AAAA',"{:02d} 0000".format(day)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-        df00 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0000".format(day)) )
-    with open(mobiTemp.replace('AAAA',"{:02d} 0800".format(day)), 'r') as f:
-        df08 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0800".format(day)) )
-    with open(mobiTemp.replace('AAAA',"{:02d} 1600".format(day)), 'r') as f:
-        df16 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 1600".format(day)) )
-    df00mx=df00[getCountry==df00['country']];df08mx=df08[getCountry==df08['country']];df16mx=df16[getCountry==df16['country']]
+def main():
+    for day in range(2,26): #day=3#
+        with open(mobiTemp.replace('AAAA',"{:02d} 0000".format(day)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+            df00 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0000".format(day)) )
+        with open(mobiTemp.replace('AAAA',"{:02d} 0800".format(day)), 'r') as f:
+            df08 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 0800".format(day)) )
+        with open(mobiTemp.replace('AAAA',"{:02d} 1600".format(day)), 'r') as f:
+            df16 = pd.read_csv( mobiTemp.replace('AAAA',"{:02d} 1600".format(day)) )
+        df00mx=df00[getCountry==df00['country']];df08mx=df08[getCountry==df08['country']];df16mx=df16[getCountry==df16['country']]
+    
+        # computeFlow(df00mx);computeFlow(df08mx); computeFlow(df16mx);
+    
+        # df00mx['start_polygon_name']['end_polygon_name'] df00mx.head(1)['n_baseline']
+        df00mxMerged=mergeMobilities(df00mx, df08mx);print(df00mxMerged.shape)
+        df00mxMerged=mergeMobilities(df00mxMerged, df16mx);print(df00mxMerged.shape)
+    
+        df00mxMerged.to_csv(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)),index=False)
+        print(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)))
+        
+        
+        
+mobiVisuRes="/data/covid/visuRes"
+allMobi="/data/covid/fb26PerDay"#/2020-04-02_0000.csv"
+mobiTemp="/data/covid/fb26/Mexico Coronavirus Disease Prevention Map Apr 03 2020 Id  Movement between Administrative Regions_2020-04-AAAA.csv"
+mobiTempPerDay="/data/covid/fb26PerDay/2020-04-AAAA.csv"
+##################################################################################################################################################################################
+#Join databases per day
+title="Municipalities with displacement larger 30 km per day"
+baselinePerFile=[]; getCountry='MX'#'GT'#
 
-    # computeFlow(df00mx);computeFlow(df08mx); computeFlow(df16mx);
 
-    # df00mx['start_polygon_name']['end_polygon_name'] df00mx.head(1)['n_baseline']
-    df00mxMerged=mergeMobilities(df00mx, df08mx);print(df00mxMerged.shape)
-    df00mxMerged=mergeMobilities(df00mxMerged, df16mx);print(df00mxMerged.shape)
-
-    df00mxMerged.to_csv(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)),index=False)
-    print(mobiTempPerDay.replace('AAAA',"{:02d}_MX".format(day)))
+if __name__ == "__main__":
+    main()
 
 # df00mx=df00mx[1:10];df08mx=df08mx[1:10];df16mx=df16mx[1:10]
 # areSame = df00mx['start_polygon_name']==df08mx['start_polygon_name']

@@ -10,7 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
 
-def computeCumulativeCases():
+def computeCumulativeCases(casesPerAdmReg):
     with open(casesPerAdmReg, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         df = pd.read_csv( casesPerAdmReg )
     
@@ -61,6 +61,12 @@ def addStartPtGeometryToMobility(dayRange):
         mobiDF=pd.concat([mobiDF, mobiDFStartPt["geometryStartEnd"]], axis=1)
         mobiDF.to_csv(mobiCases, index=False)
 
+def main():
+    dayRange=[2,23]
+    casesPerAdmReg=covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo))
+    # computeCumulativeCases(casesPerAdmReg)
+    # addCasesToMobility(dayRange)    
+    addStartPtGeometryToMobility(dayRange)
 
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
@@ -72,14 +78,10 @@ centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/I
 #Join databases per day
 # title="Municipalities with displacement larger 30 km per day"
 baselinePerFile=[]; getCountry='MX'#'GT'#
-dayRange=[2,23]
+
 
 joinByMobGeo="ByStartPt"#""
-casesPerAdmReg=covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo))
 
-
-# computeCumulativeCases()
-# addCasesToMobility(dayRange)
-
-addStartPtGeometryToMobility(dayRange)
+if __name__ == "__main__":
+    main()
 
