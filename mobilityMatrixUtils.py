@@ -27,22 +27,32 @@ import casesStats as caSts
 def plotMobmatrix(mobMetroArea,namesMetroArea,ax,fig, verbLeg=True,limDef=None, sTitle=""):
     cmap=ut.fixInitialValueColorMap()
     if limDef is None:
-        pos=ax.imshow(mobMetroArea, aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50]    
+#         pos=ax.imshow(mobMetroArea, aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50]    
+        normMobMetroAreaPer100k=colors.PowerNorm(gamma=0.5, clip=True);normMobMetroAreaPer100k.autoscale(mobMetroArea)
+#        WARNING: pcolormesh DOES NOT WORK DIAG!!!
+        pos=ax.pcolor(mobMetroArea, cmap=cmap, norm=normMobMetroAreaPer100k, edgecolors='w', linewidth=0.005 ) #[:50,:50]   
     else:
-        pos=ax.imshow(mobMetroArea, aspect='equal', cmap=cmap, vmax=limDef, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50]    
+#         pos=ax.imshow(mobMetroArea, aspect='equal', cmap=cmap, vmax=limDef, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50]    
+        normMobMetroAreaPer100k=colors.PowerNorm(gamma=0.5,vmax=limDef, clip=False);
+        pos=ax.pcolor(mobMetroArea, cmap=cmap, norm=normMobMetroAreaPer100k, edgecolors='w', linewidth=0.005 ) #[:50,:50]   
+        
+    xAxis=[x+0.5 for x in range(len(namesMetroArea))] #xAxis=[x for x in range(len(namesMetroArea))];
     
-    xAxis=[x for x in range(len(namesMetroArea))]; 
-    
-    plt.xticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical')        
+#     plt.xticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical')        
+    ax.set_xticks(xAxis); ax.set_xticklabels( [unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical' )
     fig.colorbar(pos, ax=ax); 
     
     if verbLeg:
-        ax.set_ylabel("Origin " +sTitle); plt.yticks(xAxis, [unicode(x,'utf-8') for x in namesMetroArea])
+        ax.set_ylabel("Origin " +sTitle); 
+#         plt.yticks(xAxis, [unicode(x,'utf-8') for x in namesMetroArea])
+        ax.set_yticks(xAxis); ax.set_yticklabels( [unicode(x,'utf-8') for x in namesMetroArea] )
     else:
         namesMetroAreaStr=[]
         for idx, x in zip(xrange(len(namesMetroArea)),namesMetroArea):
-            namesMetroAreaStr.append( unicode(str(idx)+' '+x[:4],'utf-8') )
-        plt.yticks(xAxis,namesMetroAreaStr)
+#             if idx ==11:
+#                 print ("Id={}".format(idx))
+            namesMetroAreaStr.append( unicode(str(idx)+' '+x,'utf-8')[:7] )        
+        ax.set_yticks(xAxis); ax.set_yticklabels( namesMetroAreaStr );#plt.yticks(xAxis,namesMetroAreaStr)
         ax.set_title(sTitle)
     
     ax.set_xlabel("Destination"); 

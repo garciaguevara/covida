@@ -95,7 +95,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
         fig = plt.figure(figsize=(14.0, 9.0));  gs = gridspec.GridSpec(ncols=4, nrows=10, figure=fig)#        gs = fig.add_gridspec(4, 4)
         
         ax = fig.add_subplot( gs[0:7, 2:4] );
-        pos=ax.pcolormesh(mobMetroAreaPer100k, cmap=cmap, norm=normMobMetroAreaPer100k, edgecolors='w', linewidth=0.01) #[:50,:50] 
+        pos=ax.pcolor(mobMetroAreaPer100k, cmap=cmap, norm=normMobMetroAreaPer100k, edgecolors='w', linewidth=0.01) #[:50,:50] 
 #         pos=ax.imshow(mobMetroAreaPer100k, aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5), vmax=np.max(maxMobOffDiag), interpolation='None') #[:50,:50] 
 #         plt.yticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea]) 
 #         plt.xticks(xAxis,[unicode(x,'utf-8')[:4] for x in namesMetroArea], rotation='vertical')
@@ -122,7 +122,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
         casesPer100kPF=np.concatenate((casesCum3DaysPer100k,spaceBC,cum3DPer100kFut ), axis=1)
         for i in xrange(4): dateStrList.append(".")
         dateStrList+=dateFutList        
-        pos=ax1.pcolormesh(casesPer100kPF,  cmap=cmap, vmax=limCases,  edgecolors='w', linewidth=0.01 ) #[:50,:50] aspect='equal', norm=colors.PowerNorm(gamma=0.5),
+        pos=ax1.pcolor(casesPer100kPF,  cmap=cmap, vmax=limCases,  edgecolors='w', linewidth=0.01 ) #[:50,:50] aspect='equal', norm=colors.PowerNorm(gamma=0.5),
 #         plt.yticks(xAxis,[unicode(x,'utf-8') for x in namesMetroArea])
 #         plt.xticks(xAxis[:len(dateStrList)],[unicode(x,'utf-8')[:5] for x in dateStrList], rotation='vertical')
         ax1.set_yticks(xAxis); ax1.set_yticklabels( [unicode(x,'utf-8') for x in namesMetroArea] )
@@ -145,7 +145,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
 #             plt.quiver(ox, orgMunis, dx, dy, color=cmap(norm( orgMunisMob[orgMunisIdx].tolist() )) , scale=2,angles='xy')
 
         ax4 = fig.add_subplot(gs[8:11, 2:4]);
-        pos=ax4.pcolormesh(deltaCasesPer100k.transpose(),  cmap=cmap, edgecolors='w', linewidth=0.01 ) #[:50,:50] aspect='equal',vmax=limCases, ,  norm=colors.PowerNorm(gamma=0.5)
+        pos=ax4.pcolor(deltaCasesPer100k.transpose(),  cmap=cmap, edgecolors='w', linewidth=0.01 ) #[:50,:50] aspect='equal',vmax=limCases, ,  norm=colors.PowerNorm(gamma=0.5)
 #         plt.yticks(xAxis[:len(dateFutList)],[unicode(x,'utf-8')[:5] for x in dateFutList])
 #         plt.xticks(xAxis,[unicode(x,'utf-8')[:5] for x in namesMetroArea ], rotation='vertical')
 #         ax4 = fig.add_subplot(223); 

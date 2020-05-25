@@ -106,7 +106,7 @@ def getMetroByDistance(tGeoLocInv,ptMTY):
     nearest_dist, nearest_idx = tree.query(ptMTY, k=21) #.query_radius(points, r=1.5)     
     return nearest_idx
 
-def getMetroByMobility(muniID,dayRange,secondOrder=True):
+def getMetroByMobility(muniID,dayRange,secondOrder=False):
 #     TODO: Add filter per 100k population
     
     mobToMuniFrom=[]; mobToMuniFromSet=set([])
@@ -115,13 +115,17 @@ def getMetroByMobility(muniID,dayRange,secondOrder=True):
         mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
         mobToMuni=mobility[:, muniID]
         mobToMuniFrom.append( mobToMuni.nonzero()[0] )
+        #TODO: Sort by mobility
         mobToMuniFromSet=mobToMuniFromSet.union( set(mobToMuni.nonzero()[0].tolist()) )
         
         
 #         mobMetroArea=lil_matrix( ( len(metroIdx), len(metroIdx) ), dtype=int64 )
     
     munisIdx = np.sort( list(mobToMuniFromSet) ).tolist()
-    if secondOrder:
+    
+    print("Length 1st order muni {}".format(len(mobToMuniFromSet)))
+    
+    if secondOrder == "2nd":
         munisIdx=getMetro2ndOrderByMobility(munisIdx,dayRange)
     
     
@@ -135,8 +139,11 @@ def getMetro2ndOrderByMobility(munisIdx,dayRange):
         mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
         mobToMuni=mobility[:, munisIdx]
         mobToMuniFrom.append( mobToMuni.nonzero()[0] )
-        mobToMuniFromSet=mobToMuniFromSet.union( set(mobToMuni.nonzero()[0].tolist()) )
-        
+        mobToMuniFromSet=mobToMuniFromSet.union( set(mobToMuni.nonzero()[0].tolist()) ); 
+    
+    #TODO: Sort by mobility
+    print("Length 2nd order muni {}".format(len(mobToMuniFromSet)))
+    munisIdx = np.sort( list(mobToMuniFromSet) ).tolist()
     return munisIdx
 #         mobMetroArea=lil_matrix( ( len(metroIdx), len(metroIdx) ), dtype=int64 )
     
@@ -167,9 +174,9 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
     
     ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
     metroIdx=getMetroByDistance(tGeoLocInv,ptMTY)
-    if metroType == "":
+    if metroType == "" or metroType == "2nd":
         print ( "{} Metro Area by mobility".format( tGeoLocName[metroIdx[0]] ) )
-        metroIdx=getMetroByMobility(metroIdx[0],dayRange)
+        metroIdx=getMetroByMobility(metroIdx[0],dayRange, secondOrder=metroType)
     
     namesMetroArea=tGeoLocName[list(metroIdx)]
     
@@ -200,8 +207,8 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
 
         mobMatrixFile="{}mobMatrices/metro/{}/2020-04-AAAA.csv".format(allMobi,MetroArea).replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
         io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)        
-        
-        fig = plt.figure(figsize=(12.0, 5.0)); ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
+
+        fig = plt.figure(figsize=(len(metroIdx)/1.5, len(metroIdx)/2.8)); ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
         mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax, fig)#,limDef=maxDef        
         maxMob = np.max(mobMetroArea); muni = np.argmax(mobMetroArea)
         muniOrg=muni/len(namesMetroArea); muniDest=muni%len(namesMetroArea)
@@ -243,7 +250,8 @@ covCasos= "/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 baselinePerFile=[]; getCountry='MX'#'GT'#
-joinByMobGeo="ByStartPt";  MetroArea="MTY"; metroType="";MetroArea+=metroType      #""    
+joinByMobGeo="ByStartPt";  MetroArea="MTY"; metroType=""#2nd";
+MetroArea+=metroType      #""    
 
 if __name__ == "__main__":
     main()
