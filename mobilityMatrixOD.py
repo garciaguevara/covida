@@ -40,8 +40,9 @@ def computeMobilityMatrix(dayRange):
         
         mobility=lil_matrix( ( len(tReg), len(tReg) ), dtype=int64 ) #csr_matrix
         
-        admRegIdStart=mobiDF.start_polygon_id.unique(); admRegIdEnd=mobiDF.end_polygon_id.unique();
-        admRegSetStart=set(admRegIdStart);admRegSetEnd=set(admRegIdEnd)        
+#         admRegIdStart=mobiDF.start_polygon_id.unique(); admRegIdEnd=mobiDF.end_polygon_id.unique();
+#         admRegSetStart=set(admRegIdStart);admRegSetEnd=set(admRegIdEnd)        
+
 #         #split geometry
 #         test = mobiDF["geometry"].str.replace("LINESTRING \(", "", n=1)
 #         test=test.str.replace("\)", "", n=1)
@@ -105,9 +106,43 @@ def getMetroByDistance(tGeoLocInv,ptMTY):
     nearest_dist, nearest_idx = tree.query(ptMTY, k=21) #.query_radius(points, r=1.5)     
     return nearest_idx
 
-def getMetroByMobility():
+def getMetroByMobility(muniID,dayRange,secondOrder=True):
+#     TODO: Add filter per 100k population
     
-    return moreConnected_idx
+    mobToMuniFrom=[]; mobToMuniFromSet=set([])
+    for day in range(dayRange[0],dayRange[1]): #
+        mobMatrixFile="{}mobMatrices/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX{}".format(day,joinByMobGeo))
+        mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
+        mobToMuni=mobility[:, muniID]
+        mobToMuniFrom.append( mobToMuni.nonzero()[0] )
+        mobToMuniFromSet=mobToMuniFromSet.union( set(mobToMuni.nonzero()[0].tolist()) )
+        
+        
+#         mobMetroArea=lil_matrix( ( len(metroIdx), len(metroIdx) ), dtype=int64 )
+    
+    munisIdx = np.sort( list(mobToMuniFromSet) ).tolist()
+    if secondOrder:
+        munisIdx=getMetro2ndOrderByMobility(munisIdx,dayRange)
+    
+    
+    return munisIdx
+
+
+def getMetro2ndOrderByMobility(munisIdx,dayRange):
+    mobToMuniFrom=[]; mobToMuniFromSet=set([])
+    for day in range(dayRange[0],dayRange[1]): #
+        mobMatrixFile="{}mobMatrices/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX{}".format(day,joinByMobGeo))
+        mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
+        mobToMuni=mobility[:, munisIdx]
+        mobToMuniFrom.append( mobToMuni.nonzero()[0] )
+        mobToMuniFromSet=mobToMuniFromSet.union( set(mobToMuni.nonzero()[0].tolist()) )
+        
+    return munisIdx
+#         mobMetroArea=lil_matrix( ( len(metroIdx), len(metroIdx) ), dtype=int64 )
+    
+    
+    
+    return np.sort( list(mobToMuniFromSet) ).tolist()
     
 
 
@@ -130,31 +165,21 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
     tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
     tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]; tReg=np.array(tReg); tGeoLocName=np.array(tGeoLocName)
     
+    ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
+    metroIdx=getMetroByDistance(tGeoLocInv,ptMTY)
+    if metroType == "":
+        print ( "{} Metro Area by mobility".format( tGeoLocName[metroIdx[0]] ) )
+        metroIdx=getMetroByMobility(metroIdx[0],dayRange)
     
-    if metroType == "dist":
-        ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
-        metroIdx=getMetroByDistance(tGeoLocInv,ptMTY)
-    else:
-        metroIdx=getMetroByMobility()
-    
-    
-
-
-
-
-
-    
-
     namesMetroArea=tGeoLocName[list(metroIdx)]
-    
     
     print("Admin Regions within metropolitan area {}".format(tGeoLocName[list(metroIdx)]) )
     with open(covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         casosCentroidsDF = pd.read_csv( covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo)) )
     
     df = pd.DataFrame()
-    for nearIdx in metroIdx:
-        metroAdminReg = casosCentroidsDF[casosCentroidsDF['PolygonID']==tReg[nearIdx] ]
+    for metroID in metroIdx:
+        metroAdminReg = casosCentroidsDF[casosCentroidsDF['PolygonID']==tReg[metroID] ]
         df=df.append(metroAdminReg, ignore_index=True, sort=False)
 
     df.to_csv(covCasos.replace('.',"CentroidsPerAdminRegions{}_Metro{}.".format(joinByMobGeo,MetroArea)),index=False)
