@@ -25,7 +25,7 @@ import casesStats as caSts
 import mobilityMatrixUtils as mobMU
     
 def mobilityWithCasesPer100kMetro(dayRange):
-    maxMobiFile=allMobi+"mobMatrices/metro/MTY/plots/raw/maxPerDay.pkl"
+    maxMobiFile=allMobi+"mobMatrices/metro/{}/plots/raw/maxPerDay.pkl".format(MetroArea)
     if os.path.exists(maxMobiFile):
         with open(maxMobiFile, 'rb') as extentFilePkl: #save selected hypothesis
             mobMaxPerDay=pickle.load(extentFilePkl)
@@ -42,14 +42,14 @@ def mobilityWithCasesPer100kMetro(dayRange):
         casosMetroDF = pd.read_csv( casosMetroPath )
     namesMetroArea=casosMetroDF['PolygonName']; populationsMetro=casosMetroDF['poblacion'].to_numpy().astype(np.double)
 
-    maxMobiFilePer100k=allMobi+"mobMatrices/metro/MTY/plots/per100k/maxPerDayPer100k.pkl"
+    maxMobiFilePer100k=allMobi+"mobMatrices/metro/{}/plots/per100k/maxPerDayPer100k.pkl".format(MetroArea)
     if os.path.exists(maxMobiFilePer100k):
         with open(maxMobiFilePer100k, 'rb') as extentFilePkl: #save selected hypothesis
             maxMobOffDiag=pickle.load(extentFilePkl)
     else:
         maxMobOffDiag=[]
         for day in range(dayRange[0],dayRange[1]): #
-            mobMatrixFile="{}mobMatrices/{}/2020-04-AAAA.csv".format(allMobi,"metro/MTY").replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
+            mobMatrixFile="{}mobMatrices/metro/{}/2020-04-AAAA.csv".format(allMobi,MetroArea).replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
             mobMetroArea=io.mmread(mobMatrixFile.replace("csv", "mtx") ).toarray()
             
             fig = plt.figure(figsize=(20.0, 14.0)); ax = fig.add_subplot(221); mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax, fig, limDef=maxDef ) 
@@ -70,7 +70,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
     
             _,mobDate=os.path.split(mobMatrixFile); dateMetro=mobDate.replace("_MXByStartPt{}.csv".format(MetroArea)," "+MetroArea)  
             fig.suptitle( unicode("AdminRegions facebook mobility Matrix {} OffDiag Per100k  max {} traj {}".format( dateMetro, maxOffDiag, maxTrajOffDiag), 'utf-8') );
-            fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots/per100k"), bbox_inches='tight')
+            fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/"+MetroArea, "metro/"+MetroArea+"/plots/per100k"), bbox_inches='tight')
         with open(maxMobiFilePer100k, 'wb') as extentFilePkl: #save selected hypothesis
             pickle.dump(maxMobOffDiag,extentFilePkl)
 
@@ -85,7 +85,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
     cmap=ut.fixInitialValueColorMap()
     muniCumCasesTH=1.0; deltaCasesTH=4.0;mobiTH=4.0 #per100k
     for day in range(dayRange[0],dayRange[1]): #
-        mobMatrixFile="{}mobMatrices/{}/2020-04-AAAA.csv".format(allMobi,"metro/MTY").replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
+        mobMatrixFile="{}mobMatrices/metro/{}/2020-04-AAAA.csv".format(allMobi,MetroArea).replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
         mobMetroArea=io.mmread(mobMatrixFile.replace("csv", "mtx") ).toarray()
         mobMetroAreaPer100k=(mobMetroArea*100000.0/populationsMetro[:,None])
 
@@ -155,7 +155,7 @@ def mobilityWithCasesPer100kMetro(dayRange):
 
         cb=fig.colorbar(pos, ax=ax4); tick_locator = ticker.MaxNLocator(nbins=5)
         cb.locator = tick_locator;  cb.update_ticks()
-        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots/casesPer100k"), bbox_inches='tight');
+        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/"+MetroArea, "metro/"+MetroArea+"/plots/casesPer100k"), bbox_inches='tight');
     
     
 def main():
@@ -172,7 +172,7 @@ covCasos= "/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 baselinePerFile=[]; getCountry='MX'#'GT'#
-joinByMobGeo="ByStartPt";  MetroArea="MTY"      #""    
+joinByMobGeo="ByStartPt";  MetroArea="MTY"; metroType="";MetroArea+=metroType       #""    
 
 if __name__ == "__main__":
     main()

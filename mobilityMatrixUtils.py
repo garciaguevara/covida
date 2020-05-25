@@ -87,7 +87,7 @@ covCasos= "/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 baselinePerFile=[]; getCountry='MX'#'GT'#
-joinByMobGeo="ByStartPt";  MetroArea="MTY"      #""    
+joinByMobGeo="ByStartPt";  MetroArea="MTY"; metroType="";MetroArea+=metroType       #""    
 
 if __name__ == "__main__":
     main()

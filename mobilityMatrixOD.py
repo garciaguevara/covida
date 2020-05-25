@@ -99,9 +99,20 @@ def computeMobilityMatrix(dayRange):
         pos2=ax2.imshow(mobility.toarray(), aspect='equal', cmap=cmap, norm=colors.PowerNorm(gamma=0.5) ) #[:50,:50] 
         fig2.colorbar(pos2, ax=ax2) ;ax2.set_ylabel("Origin"); ax2.set_xlabel("Destination")
         #'Ecatepec de Morelos'->'Iztapalapa' mobility[714,706];tGeoLocName[714];tGeoLocName[706];mobility[682,682];
-        
+
+def getMetroByDistance(tGeoLocInv,ptMTY):
+    tree = spatial.KDTree(tGeoLocInv) #KDTree(
+    nearest_dist, nearest_idx = tree.query(ptMTY, k=21) #.query_radius(points, r=1.5)     
+    return nearest_idx
+
+def getMetroByMobility():
+    
+    return moreConnected_idx
+    
+
+
 def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
-    maxMobiFile=allMobi+"mobMatrices/metro/MTY/plots/raw/maxPerDay.pkl"
+    maxMobiFile=allMobi+"mobMatrices/metro/{}/plots/raw/maxPerDay.pkl".format(MetroArea)
     if os.path.exists(maxMobiFile) :
         return 
 #         with open(maxMobiFile, 'rb') as extentFilePkl: #save selected hypothesis
@@ -113,27 +124,36 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
 #         maxDef=np.max(maxDefList);maxDefOffDiag=np.max(maxDefOffDiagList);
 #     elif os.path.exists(maxMobiFile) and not normalize: return
 #     else: maxDef=None;maxDefOffDiag=None
-        
-    ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) 
-    ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
     if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
         with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
             tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)    
-
-    #TODO: def getMetroByMobility():
-    
-    #TODO: def getMetroByDistance():
     tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
     tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]; tReg=np.array(tReg); tGeoLocName=np.array(tGeoLocName)
-    tree = spatial.KDTree(tGeoLocInv) #KDTree(
-    nearest_dist, nearest_idx = tree.query(ptMTY, k=21) #.query_radius(points, r=1.5)     
-    namesMetroArea=tGeoLocName[list(nearest_idx)]
-    print("Admin Regions within metropolitan area {}".format(tGeoLocName[list(nearest_idx)]) )
+    
+    
+    if metroType == "dist":
+        ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
+        metroIdx=getMetroByDistance(tGeoLocInv,ptMTY)
+    else:
+        metroIdx=getMetroByMobility()
+    
+    
+
+
+
+
+
+    
+
+    namesMetroArea=tGeoLocName[list(metroIdx)]
+    
+    
+    print("Admin Regions within metropolitan area {}".format(tGeoLocName[list(metroIdx)]) )
     with open(covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo)), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         casosCentroidsDF = pd.read_csv( covCasos.replace('.',"CentroidsPerAdminRegions{}.".format(joinByMobGeo)) )
     
     df = pd.DataFrame()
-    for nearIdx in nearest_idx:
+    for nearIdx in metroIdx:
         metroAdminReg = casosCentroidsDF[casosCentroidsDF['PolygonID']==tReg[nearIdx] ]
         df=df.append(metroAdminReg, ignore_index=True, sort=False)
 
@@ -148,19 +168,19 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
         mobMatrixFile="{}mobMatrices/2020-04-AAAA.csv".format(allMobi).replace('AAAA',"{:02d}_MX{}".format(day,joinByMobGeo))
         mobility=io.mmread(mobMatrixFile.replace("csv", "mtx") ).tocsr()
         
-        mobMetroArea=lil_matrix( ( len(nearest_idx), len(nearest_idx) ), dtype=int64 )
-        for idxMetroR, idxR in zip(xrange(len(nearest_idx)), nearest_idx):
-            for idxMetroC, idxC in zip(xrange(len(nearest_idx)), nearest_idx):
-                mobMetroArea[idxMetroR, idxMetroC]=mobility[idxR, idxC] #mobility[nearest_idx[4], nearest_idx[4]]
+        mobMetroArea=lil_matrix( ( len(metroIdx), len(metroIdx) ), dtype=int64 )
+        for idxMetroR, idxR in zip(xrange(len(metroIdx)), metroIdx):
+            for idxMetroC, idxC in zip(xrange(len(metroIdx)), metroIdx):
+                mobMetroArea[idxMetroR, idxMetroC]=mobility[idxR, idxC] #mobility[metroIdx[4], metroIdx[4]]
 
-        mobMatrixFile="{}mobMatrices/{}/2020-04-AAAA.csv".format(allMobi,"metro/MTY").replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
+        mobMatrixFile="{}mobMatrices/metro/{}/2020-04-AAAA.csv".format(allMobi,MetroArea).replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
         io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)        
         
         fig = plt.figure(figsize=(12.0, 5.0)); ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
         mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax, fig)#,limDef=maxDef        
         maxMob = np.max(mobMetroArea); muni = np.argmax(mobMetroArea)
         muniOrg=muni/len(namesMetroArea); muniDest=muni%len(namesMetroArea)
-        maxTraj="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], nearest_idx[muniOrg], nearest_idx[muniDest])
+        maxTraj="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], metroIdx[muniOrg], metroIdx[muniDest])
         
         _,mobDate=os.path.split(mobMatrixFile); dateMetro=mobDate.replace("_MXByStartPt{}.csv".format(MetroArea)," "+MetroArea)               
         
@@ -168,13 +188,13 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
 #         maxOffDiag = mobMetroArea[mask].max(); maxOffDiagNumi = mobMetroArea[mask].argmax();        
         np.fill_diagonal(mobMetroArea, 0); maxOffDiag = mobMetroArea.max(); muniOffDiag = mobMetroArea.argmax()
         muniOrg=muniOffDiag/len(namesMetroArea); muniDest=muniOffDiag%len(namesMetroArea); #mobMetroArea[muniOrg,muniDest]
-        maxTrajOffDiag="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], nearest_idx[muniOrg], nearest_idx[muniDest])         
+        maxTrajOffDiag="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], metroIdx[muniOrg], metroIdx[muniDest])         
         ax2 = fig.add_subplot(122); mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax2, fig, verbLeg=False) #, limDef=maxDefOffDiag
 
         mobMaxPerDay.append( ut.mobilityMatrixMetric( dateMetro, maxMob, unicode(maxTraj,'utf-8'), maxOffDiag, unicode(maxTrajOffDiag,'utf-8') ) )    
               
         fig.suptitle( unicode("AdminRegions facebook mobility Matrix {} OffDiag max {} traj {}".format( dateMetro, maxOffDiag, maxTrajOffDiag), 'utf-8') );
-        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/MTY", "metro/MTY/plots/raw"), bbox_inches='tight')
+        fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/"+MetroArea, "metro/"+MetroArea+"/plots/raw"), bbox_inches='tight')
 
     with open(maxMobiFile, 'wb') as extentFilePkl: #save selected hypothesis
         pickle.dump(mobMaxPerDay, extentFilePkl)
@@ -198,7 +218,7 @@ covCasos= "/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 ##################################################################################################################################################################################
 baselinePerFile=[]; getCountry='MX'#'GT'#
-joinByMobGeo="ByStartPt";  MetroArea="MTY"      #""    
+joinByMobGeo="ByStartPt";  MetroArea="MTY"; metroType="";MetroArea+=metroType      #""    
 
 if __name__ == "__main__":
     main()
