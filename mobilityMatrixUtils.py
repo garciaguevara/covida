@@ -40,15 +40,13 @@ class municipality:
 #         self.maxTrajOffDiag=maxTrajOffDiagMob
 
 class metroAreaAdminReg:
-    def __init__(self,name, polyID,cves_mun):
+    def __init__(self,name, polyID,coord):
         self.PolygonName=name        
         self.PolygonID=polyID
-        self.cves_mun=cves_mun        
+        self.coord=coord
+        self.cves_mun=[]        
 #         self.maxOffDiag=maxOffDiagMob
 #         self.maxTrajOffDiag=maxTrajOffDiagMob
-
-
-
 def compareMatchedCoords(matched, centMunisPts, metroPt, limDist=False):    
     tree = spatial.KDTree(centMunisPts[matched]) #KDTree(
     nearest_dist, nearest_idx = tree.query(metroPt, k=1) #.query_radius(points, r=1.5)   

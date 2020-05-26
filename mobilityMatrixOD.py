@@ -23,11 +23,10 @@ import utils as ut
 import casesStats as caSts
 
 import mobilityMatrixUtils as mobMU
+import joinMunicipalitiesInAdminRegions as joinMuni
 
 def computeMobilityMatrix(dayRange):    
-    if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
-        with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
-            tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)    
+    tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay =joinMuni.mobAdminRegion(dayRange,allMobi,joinByMobGeo)
     
 #     adminRegPerDay=[]; totalReg=[];totalGeoLoc=[]; totalGeoLocName=[];
 #     totalRegSet=set([]); totalLargerChangeLoc=[]       
@@ -166,14 +165,15 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
 #         maxDef=np.max(maxDefList);maxDefOffDiag=np.max(maxDefOffDiagList);
 #     elif os.path.exists(maxMobiFile) and not normalize: return
 #     else: maxDef=None;maxDefOffDiag=None
-    if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
-        with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
-            tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)    
+    tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = joinMuni.mobAdminRegion(dayRange,allMobi,joinByMobGeo)
     tGeoLocInv=np.array(tGeoLoc)#TODO: the latitude and longitude coordinates are in the wrong order
     tGeoLocInv[:,[0, 1]] = tGeoLocInv[:,[1, 0]]; tReg=np.array(tReg); tGeoLocName=np.array(tGeoLocName)
     
     ptMTY=[-100.31109249700000419, 25.64490731320000094]#LINESTRING (-100.283203125 25.562238774210538) ptTeran=[-99.41303383000000338, 25.27589694790000152] #LINESTRING (-99.629296875 25.330469955007835
     metroIdx=getMetroByDistance(tGeoLocInv,ptMTY)
+    
+    metroAdminReg=joinMuni.getMetroAreaAdminRegions(MetroArea)
+    
     if metroType == "" or metroType == "2nd":
         print ( "{} Metro Area by mobility".format( tGeoLocName[metroIdx[0]] ) )
         metroIdx=getMetroByMobility(metroIdx[0],dayRange, secondOrder=metroType)
