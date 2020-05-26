@@ -12,16 +12,31 @@ from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
 
-def numberOfNonMatchLetters(a,b):
+def numberOfMatchedLetters(a,b):
     u=zip(a,b)
     d=dict(u)    
     x=0
     for i,j in d.items():
         if i==j:
-            x=+1
+            x+=1
     return x
 
-
+def getIndexPositions(listOfElements, element):
+    ''' Returns the indexes of all occurrences of given element in
+    the list- listOfElements '''
+    indexPosList = []
+    indexPos = 0
+    while True:
+        try:
+            # Search for item in list from indexPos to the end of list
+            indexPos = listOfElements.index(element, indexPos)
+            # Add the index position in list
+            indexPosList.append(indexPos)
+            indexPos += 1
+        except ValueError as e:
+            break
+ 
+    return indexPosList
 
 class mobilityMatrixMetric:
     def __init__(self,dateMob, maxMob,maxTrajMob, maxOffDiagMob,maxTrajOffDiagMob):
@@ -30,6 +45,28 @@ class mobilityMatrixMetric:
         self.maxTraj=maxTrajMob        
         self.maxOffDiag=maxOffDiagMob
         self.maxTrajOffDiag=maxTrajOffDiagMob
+        
+        
+        
+        
+        
+class municipality:
+    def __init__(self,name, coord,cve):
+        self.name=name        
+        self.coord=coord
+        self.cve=cve        
+#         self.maxOffDiag=maxOffDiagMob
+#         self.maxTrajOffDiag=maxTrajOffDiagMob
+
+class metroAreaAdminReg:
+    def __init__(self,name, polyID,cves_mun):
+        self.PolygonName=name        
+        self.PolygonID=polyID
+        self.cves_mun=cves_mun        
+#         self.maxOffDiag=maxOffDiagMob
+#         self.maxTrajOffDiag=maxTrajOffDiagMob
+
+
 
 def fixInitialValueColorMap():
     cmap = pylt.cm.jet  # define the colormap

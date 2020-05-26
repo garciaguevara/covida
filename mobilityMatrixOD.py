@@ -207,8 +207,11 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
 
         mobMatrixFile="{}mobMatrices/metro/{}/2020-04-AAAA.csv".format(allMobi,MetroArea).replace('AAAA',"{:02d}_MX{}{}".format(day,joinByMobGeo,MetroArea))
         io.mmwrite(mobMatrixFile.replace("csv", "mtx"), mobMetroArea)        
-
-        fig = plt.figure(figsize=(len(metroIdx)/1.5, len(metroIdx)/2.8)); ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
+        
+        fx=len(metroIdx)/1.5; fy= len(metroIdx)/2.8
+        if fx<12.0:fx=12
+        if fy<5.0:fy=5
+        fig = plt.figure( figsize=(fx,fy) ); ax = fig.add_subplot(121); mobMetroArea=mobMetroArea.toarray()
         mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax, fig)#,limDef=maxDef        
         maxMob = np.max(mobMetroArea); muni = np.argmax(mobMetroArea)
         muniOrg=muni/len(namesMetroArea); muniDest=muni%len(namesMetroArea)

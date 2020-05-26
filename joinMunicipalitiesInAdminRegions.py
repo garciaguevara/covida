@@ -24,7 +24,7 @@ def addCentroidToMunicipalCases(casosDF):
         encoded1 = unicodedata.normalize('NFC', casosMun["nombre"].decode('utf8'))
         encoded2 = unicodedata.normalize('NFC', centroidMun["NOM_MUN"].values[0].decode('utf8'))
         
-        if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and ut.numberOfNonMatchLetters(encoded1,encoded2)<3:
+        if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and ut.numberOfMatchedLetters(encoded1,encoded2)>len(encoded1)-3:
             casosDF.at[idx,'X']=centroidMun['X'].values[0]
             casosDF.at[idx,'Y']=centroidMun['Y'].values[0]
 #             dropIdxsB.append(centroidMun.idx)#(casosMun["cve_ent"])
@@ -192,10 +192,42 @@ def adminRegionsByMunicipalities():
 
 #TODO: factorize paths and files for all scripts
 
-# #TODO: def main():
-#     print ("HOLA!")
-# if __name__ == "__main__":
-#     main()
+def main():
+    dayRange=[2,23] #TODO: Separate from 23/04 where only state info is given
+    if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
+        with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
+            tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)
+    else:
+        tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay=mergeMobilityCoord(dayRange)
+        
+    # # Join per states
+    # tRegStates = tReg[-32:]; tGeoLocStates = tGeoLoc[-32:]; tGeoLocNameStates = tGeoLocName[-32:]
+    # tLargerChangeLocStates = tLargerChangeLoc[-3:]; adminRegPerDayStates =adminRegPerDay[-3:]
+    # with open(allMobi+"mobilityCoordMerged{}PerStates.pkl".format(joinByMobGeo), 'wb') as matchTreeFile:
+    #     pickle.dump([tRegStates, tGeoLocStates,tGeoLocNameStates, tLargerChangeLocStates, adminRegPerDayStates], matchTreeFile)  
+    # # Join per admin regions
+    # tRegAdminReg = tReg[:len(tGeoLoc)-32]; tGeoLocAdminReg = tGeoLoc[:len(tGeoLoc)-32]; tGeoLocNameAdminReg = tGeoLocName[:len(tGeoLoc)-32]
+    # tLargerChangeLocAdminReg = tLargerChangeLoc[:len(adminRegPerDay)-3]; adminRegGoodPerDay =adminRegPerDay[:len(adminRegPerDay)-3]
+    # with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'wb') as matchTreeFile:
+    #     pickle.dump([tRegAdminReg, tGeoLocAdminReg,tGeoLocNameAdminReg, tLargerChangeLocAdminReg, adminRegGoodPerDay], matchTreeFile)  
+    
+    
+    tRegSet=set(tReg);len(tRegSet);#tGeoLocSet=set(tGeoLoc); len(tGeoLocSet)
+    
+    ##################################################################################################################################################################################
+    if  not os.path.exists( covCasos.replace('.',"Centroids.") ):
+        with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+            casosDF = pd.read_csv( covCasos )
+        muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
+        print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
+        addCentroidToMunicipalCases(casosDF)    
+    with open(covCasos.replace('.',"Centroids."), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+         casosCentroidsDF = pd.read_csv( covCasos.replace('.',"Centroids.") )
+    ##################################################################################################################################################################################
+    
+    
+    adminRegionsByMunicipalities()
+    
 
 mobiVisuRes="/data/covid/visuRes"
 allMobi="/data/covid/mobility/FB/26PerDay/"#/2020-04-02_0000.csv"
@@ -206,41 +238,11 @@ centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/I
 baselinePerFile=[]; getCountry='MX'#'GT'#
 
 joinByMobGeo="ByStartPt"#""
-dayRange=[2,23] #TODO: Separate from 23/04 where only state info is given
 
-if os.path.exists(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo)):
-    with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'rb') as matchTreeFile:
-        tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay = pickle.load(matchTreeFile)
-else:
-    tReg, tGeoLoc,tGeoLocName, tLargerChangeLoc, adminRegPerDay=mergeMobilityCoord(dayRange)
-    
-# # Join per states
-# tRegStates = tReg[-32:]; tGeoLocStates = tGeoLoc[-32:]; tGeoLocNameStates = tGeoLocName[-32:]
-# tLargerChangeLocStates = tLargerChangeLoc[-3:]; adminRegPerDayStates =adminRegPerDay[-3:]
-# with open(allMobi+"mobilityCoordMerged{}PerStates.pkl".format(joinByMobGeo), 'wb') as matchTreeFile:
-#     pickle.dump([tRegStates, tGeoLocStates,tGeoLocNameStates, tLargerChangeLocStates, adminRegPerDayStates], matchTreeFile)  
-# # Join per admin regions
-# tRegAdminReg = tReg[:len(tGeoLoc)-32]; tGeoLocAdminReg = tGeoLoc[:len(tGeoLoc)-32]; tGeoLocNameAdminReg = tGeoLocName[:len(tGeoLoc)-32]
-# tLargerChangeLocAdminReg = tLargerChangeLoc[:len(adminRegPerDay)-3]; adminRegGoodPerDay =adminRegPerDay[:len(adminRegPerDay)-3]
-# with open(allMobi+"mobilityCoordMerged{}.pkl".format(joinByMobGeo), 'wb') as matchTreeFile:
-#     pickle.dump([tRegAdminReg, tGeoLocAdminReg,tGeoLocNameAdminReg, tLargerChangeLocAdminReg, adminRegGoodPerDay], matchTreeFile)  
+if __name__ == "__main__":
+    main()
 
 
-tRegSet=set(tReg);len(tRegSet);#tGeoLocSet=set(tGeoLoc); len(tGeoLocSet)
-
-##################################################################################################################################################################################
-if  not os.path.exists( covCasos.replace('.',"Centroids.") ):
-    with open(covCasos, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-        casosDF = pd.read_csv( covCasos )
-    muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
-    print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
-    addCentroidToMunicipalCases(casosDF)    
-with open(covCasos.replace('.',"Centroids."), 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-     casosCentroidsDF = pd.read_csv( covCasos.replace('.',"Centroids.") )
-##################################################################################################################################################################################
-
-
-adminRegionsByMunicipalities()
 # casosDFmx= casosDF[getCountry== casosDF['country']];df08mx=df08[getCountry==df08['country']];df16mx=df16[getCountry==df16['country']]
 # # computeFlow( casosDFmx);computeFlow(df08mx); computeFlow(df16mx);# 
 # #  casosDFmx['start_polygon_name']['end_polygon_name']  casosDFmx.head(1)['n_baseline']
