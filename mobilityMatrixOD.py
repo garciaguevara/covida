@@ -226,7 +226,7 @@ def getMobilityPerMetropolitanAreaMatrix(dayRange): #, normalize=False
         maxTrajOffDiag="{}->{}_{}->{}".format(namesMetroArea[muniOrg], namesMetroArea[muniDest], metroIdx[muniOrg], metroIdx[muniDest])         
         ax2 = fig.add_subplot(122); mobMU.plotMobmatrix(mobMetroArea,namesMetroArea,ax2, fig, verbLeg=False) #, limDef=maxDefOffDiag
 
-        mobMaxPerDay.append( ut.mobilityMatrixMetric( dateMetro, maxMob, unicode(maxTraj,'utf-8'), maxOffDiag, unicode(maxTrajOffDiag,'utf-8') ) )    
+        mobMaxPerDay.append( mobMU.mobilityMatrixMetric( dateMetro, maxMob, unicode(maxTraj,'utf-8'), maxOffDiag, unicode(maxTrajOffDiag,'utf-8') ) )    
               
         fig.suptitle( unicode("AdminRegions facebook mobility Matrix {} OffDiag max {} traj {}".format( dateMetro, maxOffDiag, maxTrajOffDiag), 'utf-8') );
         fig.savefig(mobMatrixFile.replace("csv", "png").replace("metro/"+MetroArea, "metro/"+MetroArea+"/plots/raw"), bbox_inches='tight')

@@ -4,48 +4,73 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import cKDTree
 from scipy.spatial import Voronoi, voronoi_plot_2d
+# from scipy import spatial #from sklearn.neighbors import KDTree
 import pickle
 import unicodedata
 from matplotlib.colors import LinearSegmentedColormap
 import colorsys
 import numpy as np
 import utils as ut
+import mobilityMatrixUtils as mobMU
 
 import joinMunicipalitiesInAdminRegions as joinMuni
 
-def metroAreaAdminRegions():            
+
+def munisCentroidsCVEs():    
+    if  os.path.exists( metroAreasCSV.replace('.csv',MetroArea+"MunisCentroids.pkl") ):   
+        with open( metroAreasCSV.replace('.csv', MetroArea+"MunisCentroids.pkl") ) as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
+             munisMetro = pd.read_csv( metroAreasCSV.replace('.csv', MetroArea+"MunisCentroids.pkl") )
+        return munisMetro
+   
     with open(centroidPath, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
-        centroidDF = pd.read_csv( centroidPath )
-    
+        centroidDF = pd.read_csv( centroidPath ) 
     with open(metroAreasCSV, 'r') as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
         metroAreasDF = pd.read_csv( metroAreasCSV )
     munisMetroL=metroAreasDF[MetroArea]
-        
-    
+
     munisT=centroidDF["NOM_MUN"]; nomMunis=[]; cveMunis=centroidDF["CVE_MUN"]; centMunis=centroidDF[["X","Y"]]
     for nomMuni in munisT:
-        nomMunis.append(unicodedata.normalize('NFC', nomMuni.decode('utf8')))
+        nomMunis.append( unicodedata.normalize('NFKD', nomMuni.decode('utf8')).encode('ASCII', 'ignore') )   #(unicodedata.normalize('NFC', nomMuni.decode('utf8')))
     
-    munisMetro=[]
+    munisMetro=[]    
     for muni in munisMetroL:
-        muni=unicodedata.normalize('NFC', muni.decode('utf8'))
+        muni = unicodedata.normalize('NFKD', muni.decode('utf8')).encode('ASCII', 'ignore')#        muni=unicodedata.normalize('NFC', muni.decode('utf8'))    
 #         matched=np.find(muni==nomMunis)  #TODO: more efficient     
 #         if len(matched)==0:
 #         matching = [s for s in nomMunis if muni in s]
 #         matched = ut.getIndexPositions(nomMunis, muni)      
+#     muni = unicodedata.normalize('NFKD', munisMetroL[3].decode('utf8')).encode('ASCII', 'ignore')
+#     ut.numberOfMatchedLetters(nomMunis[196],muni)    
+
         matched=[]; matchedName=[]
         for id, nomMuni in zip( xrange( len(nomMunis) ), nomMunis ):
-            if abs(len(muni)-len(nomMuni))<4 and ut.numberOfMatchedLetters(nomMuni,muni)>len(muni)-4:
-                matched.append(id); matchedName.append(nomMuni)
-  
+            if abs(len(muni)-len(nomMuni))<1 and ut.numberOfMatchedLetters(nomMuni,muni)>len(muni)-1: # ut.numberOfMatchedLetters(nomMunis[196],muni)   .replace(' ','')
+                matched.append(id); matchedName.append(nomMuni)  
         
-        if len(matched)==1:
-            munisMetro.append(ut.municipality(muni, centMunis.values[matched[0]], cveMunis[matched[0]]))
-        elif len(matched)>1:
-            print ("matched names{}".format(matchedName))
-#             TODO: compare matched coords or CVES  with MTY
-        else:
+        if len(matched)>1:
+            print ("matched names{}".format(matchedName))            
+            matched=[mobMU.compareMatchedCoords(matched, centMunis.to_numpy(np.double), munisMetro[0].coord, limDist=0.2 )]
+        elif len(matched)<1:
             print ("matched {}".format(matched))
+        
+        print ("CVE {}, coord {}, Name {}".format( cveMunis[matched[0]], muni, centMunis.values[matched[0]] ) ) 
+        munisMetro.append(mobMU.municipality(muni, centMunis.values[matched[0]], cveMunis[matched[0]]))
+    
+    with open(metroAreasCSV.replace('.csv',MetroArea+"MunisCentroids.pkl"), 'wb') as extentFilePkl: #save selected hypothesis
+        pickle.dump(munisMetro, extentFilePkl)
+    
+    return munisMetro
+
+
+
+
+def getMetroAreaAdminRegions():            
+
+    
+    munisMetro=munisCentroidsCVEs()
+    
+    
+
             
             
             
@@ -151,7 +176,7 @@ def main():
     #         casosDF = pd.read_csv( covCasos )
     #     muniName= casosDF.nombre.unique();muniCVE= casosDF.cve_ent.unique()
     #     print("Total municipios number with cases by CVE {} and by Name {}".format(muniCVE.size, muniName.size) )
-        metroAreaAdminRegions()    
+        getMetroAreaAdminRegions()    
     with open( metroAreasCSV.replace('.csv',"AdminReg.pkl") ) as f:  #os.path.join(allMobi, timePoint) #print("{:02d}".format(day))
          metroAreasAdminReg = pd.read_csv( metroAreasCSV.replace('.csv',"AdminReg.pkl") )
     ##################################################################################################################################################################################
@@ -171,7 +196,7 @@ covCasos="/data/covid/casos/12_05/Casos_Diarios_Municipio_Confirmados_20200512.c
 centroidPath="/data/covid/maps/Mapa_de_grado_de_marginacion_por_municipio_2015/IMM_2015/IMM_2015centroids.csv"
 metroAreasCSV="/data/covid/maps/metroAreas.csv"
 baselinePerFile=[]; getCountry='MX'; MetroArea="MTY"; metroType=""#2nd";#'GT'#
-
+MetroArea+=metroType
 joinByMobGeo="ByStartPt"#""
 
     

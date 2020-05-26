@@ -14,11 +14,13 @@ import numpy as np
 
 def numberOfMatchedLetters(a,b):
     u=zip(a,b)
-    d=dict(u)    
+#     d=dict(u); 
     x=0
-    for i,j in d.items():
+    for i,j in zip(a,b): # in d.items() for non repeated
         if i==j:
             x+=1
+#         else:
+#             print("WTF")
     return x
 
 def getIndexPositions(listOfElements, element):
@@ -38,33 +40,6 @@ def getIndexPositions(listOfElements, element):
  
     return indexPosList
 
-class mobilityMatrixMetric:
-    def __init__(self,dateMob, maxMob,maxTrajMob, maxOffDiagMob,maxTrajOffDiagMob):
-        self.date=dateMob        
-        self.max=maxMob
-        self.maxTraj=maxTrajMob        
-        self.maxOffDiag=maxOffDiagMob
-        self.maxTrajOffDiag=maxTrajOffDiagMob
-        
-        
-        
-        
-        
-class municipality:
-    def __init__(self,name, coord,cve):
-        self.name=name        
-        self.coord=coord
-        self.cve=cve        
-#         self.maxOffDiag=maxOffDiagMob
-#         self.maxTrajOffDiag=maxTrajOffDiagMob
-
-class metroAreaAdminReg:
-    def __init__(self,name, polyID,cves_mun):
-        self.PolygonName=name        
-        self.PolygonID=polyID
-        self.cves_mun=cves_mun        
-#         self.maxOffDiag=maxOffDiagMob
-#         self.maxTrajOffDiag=maxTrajOffDiagMob
 
 
 

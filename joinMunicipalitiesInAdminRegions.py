@@ -21,8 +21,9 @@ def addCentroidToMunicipalCases(casosDF):
     print(casosDF.shape)
     for idx, casosMun in casosDF.iterrows():
         centroidMun=centroidDF[casosMun["cve_ent"]==centroidDF['CVE_MUN']]        
-        encoded1 = unicodedata.normalize('NFC', casosMun["nombre"].decode('utf8'))
-        encoded2 = unicodedata.normalize('NFC', centroidMun["NOM_MUN"].values[0].decode('utf8'))
+        
+        encoded1 = unicodedata.normalize('NFKD', casosMun["nombre"].decode('utf8')).encode('ASCII', 'ignore') # unicodedata.normalize('NFC', casosMun["nombre"].decode('utf8'))
+        encoded2 = unicodedata.normalize('NFKD', centroidMun["NOM_MUN"].values[0].decode('utf8')).encode('ASCII', 'ignore') # unicodedata.normalize('NFC', centroidMun["NOM_MUN"].values[0].decode('utf8'))
         
         if np.sum(casosMun["cve_ent"]==centroidDF['CVE_MUN'])==1 and ut.numberOfMatchedLetters(encoded1,encoded2)>len(encoded1)-3:
             casosDF.at[idx,'X']=centroidMun['X'].values[0]

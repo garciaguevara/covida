@@ -23,6 +23,39 @@ import utils as ut
 import casesStats as caSts
 
 
+class mobilityMatrixMetric:
+    def __init__(self,dateMob, maxMob,maxTrajMob, maxOffDiagMob,maxTrajOffDiagMob):
+        self.date=dateMob        
+        self.max=maxMob
+        self.maxTraj=maxTrajMob        
+        self.maxOffDiag=maxOffDiagMob
+        self.maxTrajOffDiag=maxTrajOffDiagMob
+        
+class municipality:
+    def __init__(self,name, coord,cve):
+        self.name=name        
+        self.coord=coord
+        self.cve=cve        
+#         self.maxOffDiag=maxOffDiagMob
+#         self.maxTrajOffDiag=maxTrajOffDiagMob
+
+class metroAreaAdminReg:
+    def __init__(self,name, polyID,cves_mun):
+        self.PolygonName=name        
+        self.PolygonID=polyID
+        self.cves_mun=cves_mun        
+#         self.maxOffDiag=maxOffDiagMob
+#         self.maxTrajOffDiag=maxTrajOffDiagMob
+
+
+
+def compareMatchedCoords(matched, centMunisPts, metroPt, limDist=False):    
+    tree = spatial.KDTree(centMunisPts[matched]) #KDTree(
+    nearest_dist, nearest_idx = tree.query(metroPt, k=1) #.query_radius(points, r=1.5)   
+    if limDist and nearest_dist>limDist:
+        print( "WARNING Nearest dist {}".format(nearest_dist) )
+    return matched[nearest_idx]
+
 
 def plotMobmatrix(mobMetroArea,namesMetroArea,ax,fig, verbLeg=True,limDef=None, sTitle=""):
     cmap=ut.fixInitialValueColorMap()
